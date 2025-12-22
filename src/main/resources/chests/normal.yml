@@ -6,14 +6,10 @@ items:
   - ARROW
   # tools
   - type: IRON_AXE
-    #     name: "&a樵夫的斧头"
-    #     lore:
-    #     - "&e一把非常强大的斧头"
-    #     - "&e能够砍伐任何树木。"
     name: "&aLumberjack's Axe"
     lore:
-    - "&eA very powerful axe"
-    - "&ethat can harvest any tree."
+      - "&eA very powerful axe"
+      - "&ethat can harvest any tree."
   # blocks
   - OAK_PLANKS 16
   - COBBLESTONE 16

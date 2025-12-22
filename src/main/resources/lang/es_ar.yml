@@ -11,8 +11,17 @@ none: "&rninguno"
 
 events:
   format: "&a%name% %time%"
-  refill: "Rellenado"
-  noevent: "&rNo hay evento"
+  REFILL:
+    name: "Rellenado"
+    title: ""
+    subtitle: "&e¡Los cofres han sido rellenados!"
+    message: "&e¡Los cofres han sido rellenados!"
+  ENDER_DRAGON:
+    name: "Dragón del Fín"
+    title: "&c&lBATALLA FINAL"
+    subtitle: "&b¡Apareció el Dragón del Fín!"
+    message: "&b¡Apareció el Dragón del Fín!"
+  no_event: "&rNo hay evento"
 
 items:
   show_context: true
@@ -21,7 +30,7 @@ items:
   KIT_SELECTOR:
     name: '&a&lSelector de kit'
     description:
-    - "&7Da clic derecho para seleccionar tu kit"
+      - "&7Da clic derecho para seleccionar tu kit"
 
   START_GAME:
     name: "&6&lEmpezar juego"
@@ -32,27 +41,27 @@ items:
   GAME_OPTIONS:
     name: '&b&lOpciones del juego'
     description:
-    - "&7Da clic derecho para cambiar los ajustes del juego"
+      - "&7Da clic derecho para cambiar los ajustes del juego"
 
   SPECTATOR_OPTIONS:
     name: '&b&lOpciones de espectador'
     description:
-    - "&7Da clic derecho para cambiar tus opciones de espectador"
+      - "&7Da clic derecho para cambiar tus opciones de espectador"
 
   LEAVE:
     name: '&c&lSalir'
     description:
-    - "&7Hacé clic derecho para volver al lobby principal."
+      - "&7Hacé clic derecho para volver al lobby principal."
 
   PLAY_AGAIN:
     name: '&b&lJugar de vuelta'
     description:
-    - "&7Hacé clic derecho para jugar de nuevo"
+      - "&7Hacé clic derecho para jugar de nuevo"
 
   TELEPORTER:
     name: '&b&lTeletransportador'
     description:
-    - "&7Hacé clic derecho para teletransportarte hacia otros jugadores"
+      - "&7Hacé clic derecho para teletransportarte hacia otros jugadores"
 
 arena_join:
   title: "&eSkyWars"
@@ -65,9 +74,9 @@ arena_start:
   message: "&e¡Las jaulas se abrieron! &c¡A PELEAR!"
 
 died:
-   title: "&c&l¡MORISTE!"
-   subtitle: "&7¡Ahora sos un espectador!"
-   message: ""
+  title: "&c&l¡MORISTE!"
+  subtitle: "&7¡Ahora sos un espectador!"
+  message: ""
 
 won:
   title: "&6&lGANASTE"
@@ -90,7 +99,7 @@ COULD_NOT_SEND_BACK: "&c¡No te pudimos llevar a donde estabas antes!"
 MAIN_LOBBY_SET: "&eEl lobby principal se estableció a tu posición actual."
 COUNTDOWN_STOPPED: "&eCuenta regresiva detenida, ¡no hay suficientes jugadores para empezar el juego!"
 
-JOIN: "&e¡&7{0} &ese unió (&b{1}&e/&b{2}&e)!"
+ARENA_JOINED: "&e¡&7{0} &ese unió (&b{1}&e/&b{2}&e)!"
 
 LEAVE: "&7{0} &ese salió (&b{1}&e/&b{2}&e)"
 LEAVE_SELF: "&eTe saliste de la arena &b%arena%"
@@ -483,14 +492,97 @@ scoreboard:
       - ''
       - '&e%url%'
 
+tabList:
+  lobby:
+    header:
+      - "&b&lSKYWARS"
+    footer:
+      - "&e%url%"
+  arena:
+    player:
+      header:
+        - "&a&lSkyWars"
+        - "&eKit actual: &b%kit%"
+        - "&eMapa: &b%map%"
+      footer:
+        - "&c%players% &ejugadores restantes"
+        - "&eSiguiente evento: &b%event%"
+    spectator:
+      header:
+        - "&a&lSkyWars"
+        - "&bEstás en modo espectador"
+        - "&eMapa: &b%map%"
+      footer:
+        - "&c%players% &ejugadores restantes"
+        - "&eSiguiente evento: &b%event%"
+    intermission:
+      header:
+        - "&a&lSkywars"
+        - "&eMapa: &b%map%"
+      footer:
+        - ""
+        - "%status%"
+
+scoreboard:
+  title: '&e&lSkyWars'
+
+  lobby:
+    - '&7%date%'
+    - ''
+    - 'Monedas: &6%coins%'
+    - 'Almas: &b%souls%'
+    - 'Victorias: &a%totalwins%'
+    - 'Asesinatos: &6%totalkills%'
+    - 'Muertes: &c%totaldeaths%'
+    - ''
+    - '&e%url%'
+
+  arena:
+    player:
+      - '&7%date%'
+      - ''
+      - 'Siguiente evento:'
+      - '%event%'
+      - ''
+      - 'Jugadores restantes: &a%players%'
+      - ''
+      - 'Muertes: &a%kills%'
+      - ''
+      - 'Mapa: &a%map%'
+      - ''
+      - '&e%url%'
+
+    spectator:
+      - '&7%date%'
+      - ''
+      - 'Siguiente evento:'
+      - '%event%'
+      - ''
+      - '%status%'
+      - ''
+      - 'Mapa: &a%map%'
+      - 'Jugadores restantes: &a%players%'
+      - ''
+      - '&e%url%'
+
+    intermission:
+      - '&7%date%'
+      - ''
+      - '%status%'
+      - ''
+      - 'Mapa: &a%map%'
+      - 'Jugadores: &a%players%/%maxplayers%'
+      - ''
+      - '&e%url%'
+
 countdown:
-- title: "&e%count% segundos"
-  subtitle: "&e¡Hacé clic derecho con el arco para seleccionar tu kit!"
-  color: 6
-  range: 10
-  #message:
-  #sound:
-- title: "&c%count%"
-  subtitle: "&e¡Preparate para pelear!"
-  color: c
-  range: 5-1
+  - title: "&e%count% segundos"
+    subtitle: "&e¡Hacé clic derecho con el arco para seleccionar tu kit!"
+    color: 6
+    range: 10
+    #message:
+    #sound:
+  - title: "&c%count%"
+    subtitle: "&e¡Preparate para pelear!"
+    color: c
+    range: 5-1

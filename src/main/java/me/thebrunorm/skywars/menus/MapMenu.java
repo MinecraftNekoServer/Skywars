@@ -1,10 +1,10 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.menus;
 
 import com.cryptomorin.xseries.XMaterial;
-import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
 import me.thebrunorm.skywars.managers.ArenaManager;
+import me.thebrunorm.skywars.singletons.MessageUtils;
 import me.thebrunorm.skywars.structures.Arena;
 import me.thebrunorm.skywars.structures.SkywarsMap;
 import org.bukkit.Bukkit;
@@ -23,44 +23,44 @@ import java.util.List;
 
 public class MapMenu implements Listener {
 
-		public static void open(Player player) {
-			final Inventory inventory = Bukkit.createInventory(null, 9 * 6, Messager.getMessage("MAP_MENU_TITLE"));
-			PlayerInventoryManager.setMenu(player, MenuType.MAP_SELECTION);
-	
-			int index = 10;
-			for (final SkywarsMap map : Skywars.get().getMapManager().getMaps()) {
-				// Skywars.get().sendDebugMessage("current index: " + index);
-				if ((index + 1) % 9 == 0)
-					index += 2;
-				final List<String> lore = new ArrayList<>();
-				// lore.add(Messager.color("&7"));
-				// lore.add(Messager.color("&8Solo Insane"));
-				// lore.add(Messager.color("&7"));
-				// lore.add(Messager.color("&7Servidores Disponibles: &a1"));
-				// lore.add(Messager.color("&7Veces Unidas: &a0"));
-				// lore.add(Messager.color("&7Selecciones de Mapa: &a1"));
-	
-				final ArrayList<Arena> arenas = ArenaManager.getArenasByMap(map);
-				final int players = arenas.stream().map(arena -> arena.getAlivePlayerCount()).reduce(0, (a, b) -> a + b);
-	
-				lore.add(Messager.color(Messager.getMessage("MAP_MENU_CURRENT_ARENAS"), ArenaManager.getArenasByMap(map).size()));
-				lore.add(Messager.color(Messager.getMessage("MAP_MENU_CURRENT_PLAYERS"), players));
-				lore.add(Messager.color(Messager.getMessage("MAP_MENU_CLICK_TO_PLAY")));
-				// lore.add(Messager.color("&eClick derecho para alternarlo como favorito!"));
-	
-				final ItemStack item = new ItemStack(XMaterial.FIREWORK_STAR.parseItem());
-				final ItemMeta meta = item.getItemMeta();
-				meta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
-	
-				meta.setDisplayName(Messager.color("&a%s", map.getName()));
-				meta.setLore(lore);
-				item.setItemMeta(meta);
-				inventory.setItem(index, item);
-				index++;
-			}
-	
-			player.openInventory(inventory);
+	public static void open(Player player) {
+		final Inventory inventory = Bukkit.createInventory(null, 9 * 6, MessageUtils.getMessage("MAP_MENU_TITLE"));
+		PlayerInventoryManager.setMenu(player, MenuType.MAP_SELECTION);
+
+		int index = 10;
+		for (final SkywarsMap map : Skywars.get().getMapManager().getMaps()) {
+			// Skywars.get().sendDebugMessage("current index: " + index);
+			if ((index + 1) % 9 == 0)
+				index += 2;
+			final List<String> lore = new ArrayList<>();
+			// lore.add(Messager.color("&7"));
+			// lore.add(Messager.color("&8Solo Insane"));
+			// lore.add(Messager.color("&7"));
+			// lore.add(Messager.color("&7Servidores Disponibles: &a1"));
+			// lore.add(Messager.color("&7Veces Unidas: &a0"));
+			// lore.add(Messager.color("&7Selecciones de Mapa: &a1"));
+
+			final ArrayList<Arena> arenas = ArenaManager.getArenasByMap(map);
+			final int players = arenas.stream().map(arena -> arena.getAlivePlayerCount()).reduce(0, (a, b) -> a + b);
+
+			lore.add(MessageUtils.color(Messager.getMessage("MAP_MENU_CURRENT_ARENAS"), ArenaManager.getArenasByMap(map).size()));
+			lore.add(MessageUtils.color(Messager.getMessage("MAP_MENU_CURRENT_PLAYERS"), players));
+			lore.add(MessageUtils.color(Messager.getMessage("MAP_MENU_CLICK_TO_PLAY")));
+			// lore.add(Messager.color("&eClick derecho para alternarlo como favorito!"));
+
+			final ItemStack item = new ItemStack(XMaterial.FIREWORK_STAR.parseItem());
+			final ItemMeta meta = item.getItemMeta();
+			meta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
+
+			meta.setDisplayName(MessageUtils.color("&a%s", map.getName()));
+			meta.setLore(lore);
+			item.setItemMeta(meta);
+			inventory.setItem(index, item);
+			index++;
 		}
+
+		player.openInventory(inventory);
+	}
 	@EventHandler
 	void onClick(InventoryClickEvent event) {
 		final Player player = (Player) event.getWhoClicked();
@@ -74,7 +74,7 @@ public class MapMenu implements Listener {
 		final String name = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
 		final SkywarsMap map = Skywars.get().getMapManager().getMap(name);
 		if (!ArenaManager.joinMap(map, player))
-			player.sendMessage(Messager.get("CANT_JOIN_MAP"));
+			player.sendMessage(MessageUtils.get("CANT_JOIN_MAP"));
 	}
 
 }

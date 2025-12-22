@@ -1,11 +1,11 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.structures;
 
 import com.cryptomorin.xseries.XMaterial;
 import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
-import me.thebrunorm.skywars.SkywarsUtils;
 import me.thebrunorm.skywars.managers.ArenaManager;
+import me.thebrunorm.skywars.singletons.SkywarsUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.bukkit.Bukkit;
@@ -32,11 +32,6 @@ public class SkywarsMap {
 	File file;
 
 	String worldName;
-
-	public String getWorldName() {
-		return this.worldName;
-	}
-
 	HashMap<Integer, Vector> spawns = new HashMap<>();
 	HashMap<Integer, Vector> chests = new HashMap<>();
 
@@ -59,55 +54,7 @@ public class SkywarsMap {
 		}
 	}
 
-	public void setVectorConfig(String string, Vector vector) {
-		if (vector == null) {
-			this.config.set(string, null);
-		} else {
-			this.config.set(string + ".x", vector.getBlockX());
-			this.config.set(string + ".y", vector.getBlockY());
-			this.config.set(string + ".z", vector.getBlockZ());
-		}
-	}
-
-	public void saveParametersInConfig() {
-		if (this.config == null)
-			this.config = YamlConfiguration.loadConfiguration(this.getFile());
-		// Skywars.get().sendDebugMessage("saving parameters in config");
-		this.config.set("teamSize", this.getTeamSize());
-		this.config.set("centerRadius", this.getCenterRadius());
-		this.config.set("world", this.getWorldName());
-		if (this.getSpawns() == null) {
-			Skywars.get().sendDebugMessage(Messager.getMessage("MAP_DEBUG_SPAWNS_NULL"));
-			return;
-		}
-		// Skywars.get().sendDebugMessage("setting spawns");
-		this.config.set("spawn", null); // clear all the previous set spawns
-		for (int i = 0; i < this.getSpawns().size(); i++) {
-			// Skywars.get().sendDebugMessage("setting spawn " + i);
-			final Vector spawn = this.spawns.get(i);
-			this.setVectorConfig("spawn." + i, spawn);
-		}
-	}
-
-	public void saveConfig() {
-		if (this.getFile() == null) {
-			final File mapFile = new File(Skywars.mapsPath, String.format("%s.yml", this.getName()));
-			if (!mapFile.exists()) {
-				try {
-					mapFile.createNewFile();
-						} catch (final IOException e) {
-							org.bukkit.Bukkit.getConsoleSender().sendMessage(Skywars.get().getPrefix() + " Could not create map file: " + mapFile.getPath());
-						}			}
-			this.setConfigFile(mapFile);
-		}
-		try {
-			this.getConfig().save(this.file);
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void calculateSpawns() {
+	public boolean calculateSpawns() {
 
 		Skywars.get().sendDebugMessage("&bCalculating spawns for map &6" + this.name);
 
@@ -150,7 +97,7 @@ public class SkywarsMap {
 		Skywars.get().sendDebugMessage("got %s spawns", totalSpawnLocations);
 
 		if (totalSpawnLocations <= 0)
-			return;
+			return false;
 
 		// set the first spawn
 		this.spawns.put(0, spawnLocations.get(0));
@@ -175,22 +122,84 @@ public class SkywarsMap {
 		this.saveParametersInConfig();
 		this.saveConfig();
 		Skywars.get().sendDebugMessage("spawns calculated and saved in config");
+		return true;
 	}
 
-	public HashMap<Integer, Vector> getChests() {
-		return this.chests;
+	public void saveParametersInConfig() {
+		if (this.config == null)
+			this.config = YamlConfiguration.loadConfiguration(this.getFile());
+		// Skywars.get().sendDebugMessage("saving parameters in config");
+		this.config.set("teamSize", this.getTeamSize());
+		this.config.set("centerRadius", this.getCenterRadius());
+		this.config.set("world", this.getWorldName());
+		if (this.getSpawns() == null) {
+			Skywars.get().sendDebugMessage("warning: spawns is null");
+			return;
+		}
+		// Skywars.get().sendDebugMessage("setting spawns");
+		this.config.set("spawn", null); // clear all the previous set spawns
+		for (int i = 0; i < this.getSpawns().size(); i++) {
+			// Skywars.get().sendDebugMessage("setting spawn " + i);
+			final Vector spawn = this.spawns.get(i);
+			this.setVectorConfig("spawn." + i, spawn);
+		}
+	}
+
+	public void saveConfig() {
+		if (this.getFile() == null) {
+			final File mapFile = new File(Skywars.mapsPath, String.format("%s.yml", this.getName()));
+			if (!mapFile.exists()) {
+				try {
+					mapFile.createNewFile();
+				} catch (final IOException e) {
+					Skywars.get().sendMessage("Could not create map file: " + mapFile.getPath());
+				}
+			}
+			this.setConfigFile(mapFile);
+		}
+		try {
+			this.getConfig().save(this.file);
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public File getFile() {
+		return this.file;
+	}
+
+	public int getTeamSize() {
+		return this.teamSize;
+	}
+
+	public int getCenterRadius() {
+		return this.centerRadius;
+	}
+
+	public String getWorldName() {
+		return this.worldName;
 	}
 
 	public HashMap<Integer, Vector> getSpawns() {
 		return this.spawns;
 	}
 
-	public Vector getSpawn(Object key) {
-		return this.spawns.get(key);
+	public void setVectorConfig(String string, Vector vector) {
+		if (vector == null) {
+			this.config.set(string, null);
+		} else {
+			this.config.set(string + ".x", vector.getBlockX());
+			this.config.set(string + ".y", vector.getBlockY());
+			this.config.set(string + ".z", vector.getBlockZ());
+		}
 	}
 
-	public void setSpawn(int spawn, Vector vector) {
-		this.spawns.put(spawn, vector);
+	public String getName() {
+		return this.name;
+	}
+
+	public void setConfigFile(File file) {
+		this.file = file;
 	}
 
 	public YamlConfiguration getConfig() {
@@ -199,34 +208,6 @@ public class SkywarsMap {
 
 	public void setConfig(YamlConfiguration config) {
 		this.config = config;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public int getMaxPlayers() {
-		return this.getSpawns().size();
-	}
-
-	public int getTeamSize() {
-		return this.teamSize;
-	}
-
-	public File getFile() {
-		return this.file;
-	}
-
-	public void setConfigFile(File file) {
-		this.file = file;
-	}
-
-	public int getCenterRadius() {
-		return this.centerRadius;
-	}
-
-	public void setCenterRadius(int centerRadius) {
-		this.centerRadius = centerRadius;
 	}
 
 	public void setWorldName(String name) {
@@ -255,8 +236,24 @@ public class SkywarsMap {
 		}
 	}
 
+	public void setCenterRadius(int centerRadius) {
+		this.centerRadius = centerRadius;
+	}
+
 	public void setTeamSize(int n) {
 		this.teamSize = n;
+	}
+
+	public Vector getSpawn(Object key) {
+		return this.spawns.get(key);
+	}
+
+	public void setSpawn(int spawn, Vector vector) {
+		this.spawns.put(spawn, vector);
+	}
+
+	public int getMaxPlayers() {
+		return this.getSpawns().size() * getTeamSize();
 	}
 
 	public void calculateChests() {
@@ -288,7 +285,7 @@ public class SkywarsMap {
 						Vector vector = block.getLocation().toVector();
 						arena.getMap().getChests().put(arena.getMap().getChests().size(), vector);
 						Skywars.get().sendDebugMessage("Added chest from block for map %s at location: %s",
-							arena.getMap().getName(), vector);
+								arena.getMap().getName(), vector);
 					}
 				}
 			}
@@ -309,5 +306,9 @@ public class SkywarsMap {
 
 		saveConfig();
 		Skywars.get().sendDebugMessage("Saved chests in config: " + arena.getMap().getName());
+	}
+
+	public HashMap<Integer, Vector> getChests() {
+		return this.chests;
 	}
 }

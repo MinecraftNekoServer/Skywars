@@ -1,20 +1,19 @@
 # Skywars configuration file
 
 # the language used for the messages (lang folder)
-# en/en_ar/zh_cn or other
 locale: en
 
 # the url for displaying the %url% placeholder (scoreboard)
 url: "www.example.com"
 
 # the format for displaying the %date% placeholder (scoreboard)
-# 中国习惯：YYYY/dd/MM 按需修改
 dateFormat: "dd/MM/yyyy"
 
 # minimum players to start the game automatically
 minPlayers: 2
 
 # you may want to disable these
+tabListEnabled: true
 signsEnabled: true
 messageSounds:
   enabled: true
@@ -35,12 +34,17 @@ lastHitResetCooldown: 15
 # map size used for boundary calculation; in blocks
 maxMapSize: 200
 
-# the worlds where the lobby scoreboard shows
-# leave empty to show in all worlds:
-# scoreboardWorlds: []
-scoreboardWorlds:
-- world
-- lobby
+scoreboard:
+  enabled: true
+  # you can change this if there is a name collision
+  objective_name: skywars
+
+# filter where the lobby scoreboard and tabList shows
+# leave empty to show in all worlds
+# lobby_worlds: []
+lobby_worlds:
+  - world
+  - lobby
 
 # update task for actionbar and scoreboard
 taskUpdate:
@@ -51,12 +55,12 @@ time: # seconds
   starting: 10
   ending: 10
 
-# the amount of fireworks throwed at the end of a game
+# the amount of fireworks threw at the end of a game
 endFireworks: 3
 
-# invencibility at the start of the game
+# invincibility at the start of the game
 # (to prevent fall damage after dropping from the cages)
-invencibility:
+invincibility:
   enabled: true
   # the amount of ticks the players are invincible for
   ticks: 40
@@ -78,7 +82,7 @@ decimalFormat: "0.#"
 # you can disable the plugin commands here
 # possible options: start, forcestart, leave, where, skywars
 # you probably dont want to disable the last one lol
-disabledCommands: []
+disabledCommands: [ ]
 
 # this is represented as
 # slot (from 0 to 8): item type
@@ -107,7 +111,7 @@ items:
   # if for some reason you want to give items when the game starts
   # you can do so here
   # (not yet implemented)
-  playing: {}
+  playing: { }
 
 # you can make custom items by adding them here
 # you can add the details (name, description) in the lang file
@@ -131,47 +135,3 @@ debug:
 # it breaks the plugin (for now)
 disableUpdates: true
 autoUpdate: true
-
-
-# 尚为实现，计划完成 Not yet achieved, planned for completion
-# 大厅服务器
-
-# 规划：
-# 如果启用BC那么只允许设置一张地图并且不再使用lobby大厅
-# 玩家加入后直接将玩家送进游戏地图。返回将修改为send server 到"lobbyserver"中
-# 不启用bc则按照源逻辑继续
-# lobby Server
-
-# BungeeCord configuration is based on BedwarsRel
-bungeecord:
-  enabled: true
-  # game over send player to "lobby Server"
-  lobbyserver: Skylobby
-  # in game motd edit
-  motds:
-    waiting: |
-      $regionname$
-      &7等待中[&b$currentplayers$&7/&b$maxplayers$&7]
-    running: |
-      $regionname$
-      &7游戏中[&b$currentplayers$&7/&b$maxplayers$&7]
-    stopped: |
-      $regionname$
-      &c开发中[Stopped]
-    full: |
-      $regionname$
-      &c对局满人[Full]
-
-# 数据库连接
-# database connect
-database: mysql
-# mysql/sqlite/yml
-
-# MySQL connect setting
-Mysql:
-  host: 127.0.0.1
-  port: 3306
-  db: Skywars
-  user: root
-  password: password
-  ssl: false

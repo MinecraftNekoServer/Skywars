@@ -1,9 +1,9 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.managers;
 
 import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
-import me.thebrunorm.skywars.SkywarsUtils;
+import me.thebrunorm.skywars.singletons.SkywarsUtils;
 import me.thebrunorm.skywars.structures.Arena;
 import me.thebrunorm.skywars.structures.SkywarsMap;
 import org.apache.commons.io.FileUtils;
@@ -13,8 +13,10 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-public class ArenaManager {
+public enum ArenaManager {
+	;
 
 	public static Arena getJoinableArenaByMap(SkywarsMap map) {
 		if (map == null)
@@ -40,30 +42,20 @@ public class ArenaManager {
 		return list;
 	}
 
-	public static Arena getArenaByMap(SkywarsMap map) {
-		Skywars.get().sendDebugMessage("all arenas: %s", Skywars.get().getArenas().size());
-		if (map == null)
-			return null;
-		for (final Arena arena : Skywars.get().getArenas()) {
-			if (arena.getMap() == map)
-				return arena;
+	public static void joinRandomMap(Player player) {
+		Optional<Arena> arena = Skywars.get().getArenas().stream()
+				.filter(a -> !a.started() && !a.isUnusable())
+				.min((a, b) -> b.getUsers().size() - a.getUsers().size());
+		if (!arena.isPresent()) {
+			final SkywarsMap map = Skywars.get().getMapManager().getRandomMap();
+			joinMap(map, player);
+			return;
 		}
-		return null;
-	}
-
-	public static Arena getArenaByMap(SkywarsMap map, boolean createIfNotFound) {
-		if (map == null)
-			return null;
-		final Arena arena = getArenaByMap(map);
-		if (arena != null)
-			return arena;
-		if (!createIfNotFound)
-			return null;
-		return createNewArena(map);
+		joinMap(arena.get().getMap(), player);
 	}
 
 	public static boolean joinMap(SkywarsMap map, Player player) {
-		if(map == null) {
+		if (map == null) {
 			Skywars.get().sendDebugMessage("could not find or create arena for a null map");
 			return false;
 		}
@@ -77,9 +69,26 @@ public class ArenaManager {
 		return true;
 	}
 
-	public static void joinRandomMap(Player player) {
-		final SkywarsMap map = Skywars.get().getMapManager().getRandomMap();
-		joinMap(map, player);
+	public static Arena getArenaByMap(SkywarsMap map, boolean createIfNotFound) {
+		if (map == null)
+			return null;
+		final Arena arena = getArenaByMap(map);
+		if (arena != null)
+			return arena;
+		if (!createIfNotFound)
+			return null;
+		return createNewArena(map);
+	}
+
+	public static Arena getArenaByMap(SkywarsMap map) {
+		Skywars.get().sendDebugMessage("all arenas: %s", Skywars.get().getArenas().size());
+		if (map == null)
+			return null;
+		for (final Arena arena : Skywars.get().getArenas()) {
+			if (arena.getMap() == map)
+				return arena;
+		}
+		return null;
 	}
 
 	public static Arena createNewArena(SkywarsMap map) {
@@ -87,6 +96,14 @@ public class ArenaManager {
 		Skywars.get().getArenas().add(arena);
 		Skywars.get().sendDebugMessage("created new arena: " + map.getName());
 		return arena;
+	}
+
+	public static Arena getArenaForWorld(World world) {
+		for (final Arena arena : Skywars.get().getArenas()) {
+			if (arena.getWorld() == world)
+				return arena;
+		}
+		return null;
 	}
 
 	public static void removeArena(Arena arena) {

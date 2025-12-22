@@ -1,38 +1,39 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.commands;
 
-import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
+import me.thebrunorm.skywars.singletons.MessageUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandsUtils {
+public enum CommandsUtils {
+	;
 
 	public static boolean consoleCheck(CommandSender sender) {
 		if (sender instanceof Player)
 			return false;
-		sender.sendMessage(Messager.getMessage("CANT_EXECUTE_COMMAND_IN_CONSOLE"));
+		sender.sendMessage(MessageUtils.get("CANT_EXECUTE_COMMAND_IN_CONSOLE"));
 		return true;
 	}
 
 	public static boolean lacksPermission(CommandSender sender, String permission) {
 		if (sender.hasPermission(permission))
 			return false;
-		sender.sendMessage(Messager.getMessage("NO_PERMISSION"));
+		sender.sendMessage(MessageUtils.get("NO_PERMISSION")));
 		return true;
 	}
 
 	public static boolean hasPermission(Player player, String permission) {
 		if (player.hasPermission(permission))
 			return true;
-		player.sendMessage(Messager.getMessage("NO_PERMISSION"));
+		player.sendMessage(MessageUtils.get("NO_PERMISSION")));
 		return false;
 	}
 
 	public static boolean isInArenaJoined(Player player) {
 		if (Skywars.get().getPlayerArena(player) != null)
 			return true;
-		player.sendMessage(Messager.getMessage("NOT_JOINED"));
+		player.sendMessage(MessageUtils.get("NOT_JOINED")));
 		return false;
 	}
 }

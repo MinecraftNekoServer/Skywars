@@ -11,8 +11,17 @@ none: "&rnone"
 
 events:
   format: "&a%name% %time%"
-  refill: "Refill"
-  noevent: "&rNo event"
+  no_event: "&rNo event"
+  REFILL:
+    name: "Refill"
+    title: ""
+    subtitle: "&eChests have been refilled!"
+    message: "&eChests have been refilled!"
+  ENDER_DRAGON:
+    name: "Ender Dragon"
+    title: "&c&lENDGAME"
+    subtitle: "&bThe ender dragon appeared!"
+    message: "&bThe ender dragon appeared!"
 
 items:
   show_context: true
@@ -21,12 +30,12 @@ items:
   KIT_SELECTOR:
     name: '&a&lKit selector'
     description:
-    - "&7Right-click to select your kit"
+      - "&7Right-click to select your kit"
 
   GAME_OPTIONS:
     name: '&b&lGame options'
     description:
-    - "&7Right-click to change the game options"
+      - "&7Right-click to change the game options"
 
   START_GAME:
     name: "&6&lStart game"
@@ -37,23 +46,23 @@ items:
   SPECTATOR_OPTIONS:
     name: '&b&lSpectator options'
     description:
-    - "&7Right-click to change your spectator options"
+      - "&7Right-click to change your spectator options"
 
   LEAVE:
     name: '&c&lLeave'
     description:
-    - "&7Right-click to go back to the"
-    - "&7main lobby."
+      - "&7Right-click to go back to the"
+      - "&7main lobby."
 
   PLAY_AGAIN:
     name: '&b&lPlay again'
     description:
-    - "&7Right-click to play again"
+      - "&7Right-click to play again"
 
   TELEPORTER:
     name: '&b&lTeleporter'
     description:
-    - "&7Right-click to teleport to players"
+      - "&7Right-click to teleport to players"
 
 arena_join:
   title: "&eSkyWars"
@@ -66,9 +75,9 @@ arena_start:
   message: "&eCages opened! &cFIGHT!"
 
 died:
-   title: "&c&lYOU DIED!"
-   subtitle: "&7You are now a spectator!"
-   message: ""
+  title: "&c&lYOU DIED!"
+  subtitle: "&7You are now a spectator!"
+  message: ""
 
 won:
   title: "&6&lYOU WON"
@@ -93,7 +102,7 @@ COULD_NOT_SEND_BACK: "&cCould not send you back!"
 MAIN_LOBBY_SET: "&eThe main lobby has been set to your current position."
 COUNTDOWN_STOPPED: "&eCountdown stopped, not enough players to start the game!"
 
-JOIN: "&7{0} &ehas joined (&b{1}&e/&b{2}&e)!"
+ARENA_JOINED: "&7{0} &ehas joined (&b{1}&e/&b{2}&e)!"
 
 LEAVE: "&7{0} &eleaved (&b{1}&e/&b{2}&e)"
 LEAVE_SELF: "&eYou leaved arena &b%arena%"
@@ -103,11 +112,6 @@ started_countdown: "&aStarted the countdown!"
 started_game: "&aStarted the game!"
 
 FORCED_START: "&b&l{0} &e&lforced the game to start!"
-
-refill:
-  title: "refill"
-  subtitle: "&eChests have been refilled!"
-  message: "&eChests have been refilled!"
 
 GAME_STARTING: "&eThe game is starting in &6{0} &eseconds!"
 GAME_STARTING_SECOND: "&eThe game starts in %count% &esecond!"
@@ -388,97 +392,97 @@ KIT_SELECTED_FORMAT: "&aSelected kit &e%s"
 COULD_NOT_FIND_JOINABLE_ARENA_NO_STATUS: "couldn't find joinable arena"
 
 
-tablist:
+tabList:
   lobby:
     header:
-    - "&b&lSKYWARS"
+      - "&b&lSKYWARS"
     footer:
-    - "&e%url%"
+      - "&e%url%"
   arena:
     player:
       header:
-      - "&a&lSkyWars"
-      - "&eCurrent kit: &b%kit%"
-      - "&eMap: &b%map%"
+        - "&a&lSkyWars"
+        - "&eCurrent kit: &b%kit%"
+        - "&eMap: &b%map%"
       footer:
-      - "&c%players% &eplayers left"
-      - "&eNext event: &b%event%"
+        - "&c%players% &eplayers left"
+        - "&eNext event: &b%event%"
     spectator:
       header:
-      - "&a&lSkyWars"
-      - "&bYou're spectating"
-      - "&eMap: &b%map%"
+        - "&a&lSkyWars"
+        - "&bYou're spectating"
+        - "&eMap: &b%map%"
       footer:
-      - "&c%players% &eplayers left"
-      - "&eNext event: &b%event%"
+        - "&c%players% &eplayers left"
+        - "&eNext event: &b%event%"
     intermission:
       header:
-      - "&a&lSkywars"
-      - "&eMap: &b%map%"
+        - "&a&lSkywars"
+        - "&eMap: &b%map%"
       footer:
-      - ""
-      - "%status%"
+        - ""
+        - "%status%"
 
 scoreboard:
   title: '&e&lSkyWars'
 
   lobby:
-  - '&7%date%'
-  - ''
-  - 'Coins: &6%coins%'
-  - 'Souls: &b%souls%'
-  - 'Wins: &a%totalwins%'
-  - 'Kills: &6%totalkills%'
-  - 'Deaths: &c%totaldeaths%'
-  - ''
-  - '&e%url%'
+    - '&7%date%'
+    - ''
+    - 'Coins: &6%coins%'
+    - 'Souls: &b%souls%'
+    - 'Wins: &a%totalwins%'
+    - 'Kills: &6%totalkills%'
+    - 'Deaths: &c%totaldeaths%'
+    - ''
+    - '&e%url%'
 
   arena:
     player:
-    - '&7%date%'
-    - ''
-    - 'Next event:'
-    - '%event%'
-    - ''
-    - 'Players left: &a%players%'
-    - ''
-    - 'Kills: &a%kills%'
-    - ''
-    - 'Map: &a%map%'
-    - ''
-    - '&e%url%'
+      - '&7%date%'
+      - ''
+      - 'Next event:'
+      - '%event%'
+      - ''
+      - 'Players left: &a%players%'
+      - ''
+      - 'Kills: &a%kills%'
+      - ''
+      - 'Map: &a%map%'
+      - ''
+      - '&e%url%'
 
     spectator:
-    - '&7%date%'
-    - ''
-    - 'Next event:'
-    - '%event%'
-    - ''
-    - '%status%'
-    - ''
-    - 'Map: &a%map%'
-    - 'Players left: &a%players%'
-    - ''
-    - '&e%url%'
+      - '&7%date%'
+      - ''
+      - 'Next event:'
+      - '%event%'
+      - ''
+      - '%status%'
+      - ''
+      - 'Map: &a%map%'
+      - 'Players left: &a%players%'
+      - ''
+      - '&e%url%'
 
     intermission:
-    - '&7%date%'
-    - ''
-    - '%status%'
-    - ''
-    - 'Map: &a%map%'
-    - 'Players: &a%players%/%maxplayers%'
-    - ''
-    - '&e%url%'
+      - '&7%date%'
+      - ''
+      - '%status%'
+      - ''
+      - 'Map: &a%map%'
+      - 'Players: &a%players%/%maxplayers%'
+      - ''
+      - '&e%url%'
 
 countdown:
-- title: "&e%count% seconds"
-  subtitle: "&eRight-click the bow to select a kit!"
-  color: 6
-  range: 10
-  #message:
-  #sound:
-- title: "&c%count%"
-  subtitle: "&ePrepare to fight!"
-  color: c
-  range: 5-1
+  - title: "&e%count% seconds"
+    subtitle: "&eRight-click the bow to select a kit!"
+    color: 6
+    range: 10
+    #message:
+    #sound:
+  - title: "&c%count%"
+    subtitle: "&ePrepare to fight!"
+    color: c
+    range: 5-1

@@ -1,8 +1,9 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.events;
 
-import me.thebrunorm.skywars.ArenaStatus;
 import me.thebrunorm.skywars.Skywars;
+import me.thebrunorm.skywars.enums.ArenaStatus;
+import me.thebrunorm.skywars.managers.ArenaManager;
 import me.thebrunorm.skywars.structures.Arena;
 import me.thebrunorm.skywars.structures.SkywarsUser;
 import org.bukkit.block.Block;
@@ -11,6 +12,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -148,7 +150,7 @@ public class Events implements Listener {
 		final SkywarsUser swp = arena.getUser(player);
 		if (swp == null)
 			return;
-		if (!swp.isSpectator())
+		if (arena.started() && !swp.isSpectator())
 			return;
 
 		event.setCancelled(true);
@@ -171,25 +173,31 @@ public class Events implements Listener {
 	}
 
 	@EventHandler
+	void onBlockExplode(BlockExplodeEvent event) {
+		final Block block = event.getBlock();
+		Arena arena = ArenaManager.getArenaForWorld(block.getWorld());
+		if (arena == null) return;
+
+		checkChest(event.getBlock(), arena);
+	}
+	
+	void checkChest(Block block, Arena arena) {
+		if (!(block.getState() instanceof Chest)) return;
+		final Chest chest = (Chest) block.getState();
+		if (!arena.getActiveChests().contains(chest)) return;
+		arena.removeChest(chest);
+	}
+
+	@EventHandler
 	void onBlockBreak(BlockBreakEvent event) {
 		final Player player = event.getPlayer();
 		final Arena arena = Skywars.get().getPlayerArena(player);
-		if (arena == null)
-			return;
-		final SkywarsUser swp = arena.getUser(player);
-		if (swp == null)
-			return;
-		if (swp.isSpectator()) {
-			event.setCancelled(true);
-			return;
-		}
-		final Block block = event.getBlock();
-		if (!(block.getState() instanceof Chest))
-			return;
-		final Chest chest = (Chest) block.getState();
-		if (!arena.getActiveChests().contains(chest))
-			return;
-		arena.removeChest(chest);
+		if (arena == null) return;
+
+		checkChest(event.getBlock(), arena);
+
+		final SkywarsUser user = arena.getUser(player);
+		if (user != null && user.isSpectator()) event.setCancelled(true);
 	}
 
 	// prevent spectators from interacting

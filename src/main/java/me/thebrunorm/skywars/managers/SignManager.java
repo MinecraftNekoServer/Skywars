@@ -1,8 +1,8 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.managers;
 
-import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
+import me.thebrunorm.skywars.singletons.MessageUtils;
 import me.thebrunorm.skywars.structures.Arena;
 import me.thebrunorm.skywars.structures.SkywarsMap;
 import org.bukkit.Bukkit;
@@ -31,14 +31,6 @@ public class SignManager implements Listener {
 		return this.signs;
 	}
 
-	public static String formatElement(Location loc, SkywarsMap map) {
-		return loc.getWorld().getName() + ";" + //
-				loc.getBlockX() + ";" + //
-				loc.getBlockY() + ";" + //
-				loc.getBlockZ() + ";" + //
-				map.getName();
-	}
-
 	@EventHandler
 	void onSignChange(SignChangeEvent event) {
 		int titleLine = -1;
@@ -56,8 +48,8 @@ public class SignManager implements Listener {
 
 		final String mapName = event.getLine(titleLine + 1);
 		final Player player = event.getPlayer();
-		if (mapName == null) {
-			player.sendMessage(Messager.getMessage("SIGN_NEED_MAP_NAME"));
+		if (mapName == null || mapName.isEmpty()) {
+			player.sendMessage(MessageUtils.getMessage("SIGN_NEED_MAP_NAME"));
 			return;
 		}
 		final SkywarsMap map = Skywars.get().getMapManager().getMap(mapName);
@@ -82,9 +74,31 @@ public class SignManager implements Listener {
 
 		this.signs.put(loc, map);
 
-		player.sendMessage(Messager.getMessage("SIGN_SUCCESSFULLY_SET_UP", map.getName()));
+		player.sendMessage(MessageUtils.getMessage("SIGN_SUCCESSFULLY_SET_UP", map.getName()));
 		event.setCancelled(true);
 		this.updateSign((Sign) event.getBlock().getState(), map);
+	}
+
+	public YamlConfiguration loadSignConfig() {
+		final File signsFile = this.getSignConfigFile();
+		if (!signsFile.exists()) {
+			try {
+				signsFile.createNewFile();
+			} catch (final IOException e) {
+				e.printStackTrace();
+				Skywars.get().sendMessage("&cCould not create &bsigns.yml &cfile!");
+				return null;
+			}
+		}
+		return YamlConfiguration.loadConfiguration(signsFile);
+	}
+
+	public static String formatElement(Location loc, SkywarsMap map) {
+		return loc.getWorld().getName() + ";" + //
+				loc.getBlockX() + ";" + //
+				loc.getBlockY() + ";" + //
+				loc.getBlockZ() + ";" + //
+				map.getName();
 	}
 
 	public void saveSigns(YamlConfiguration config) {
@@ -92,7 +106,7 @@ public class SignManager implements Listener {
 			config.save(this.getSignConfigFile());
 		} catch (final IOException e) {
 			e.printStackTrace();
-			org.bukkit.Bukkit.getConsoleSender().sendMessage(Skywars.get().getPrefix() + " SignManager could not save signs.");
+			Skywars.get().sendMessage("&cCould not save signs!");
 		}
 	}
 
@@ -146,50 +160,16 @@ public class SignManager implements Listener {
 		this.updateSigns();
 	}
 
-	File getSignConfigFile() {
-		return new File(Skywars.get().getDataFolder(), "signs.yml");
-	}
-
-	public YamlConfiguration loadSignConfig() {
-		final File signsFile = this.getSignConfigFile();
-		if (!signsFile.exists()) {
-			try {
-				signsFile.createNewFile();
-			} catch (final IOException e) {
-				e.printStackTrace();
-				org.bukkit.Bukkit.getConsoleSender().sendMessage(Skywars.get().getPrefix() + " SignManager could not create signs file.");
-				return null;
-			}
-		}
-		return YamlConfiguration.loadConfiguration(signsFile);
-	}
-
 	public void updateSigns() {
 		for (final Entry<Location, SkywarsMap> sign : this.signs.entrySet()) {
 			final BlockState state = sign.getKey().getBlock().getState();
 			if (!(state instanceof Sign)) {
-				Skywars.get().sendDebugMessage("&4Warning updating signs: &csign is not sign: &b" + sign.getKey());
+				Skywars.get().sendDebugMessage("&4Error updating signs: &csign is not sign: &b" + sign.getKey());
+				continue;
 			}
 			final Sign signState = (Sign) state;
 			this.updateSign(signState, sign.getValue());
 		}
-	}
-
-	public void updateSign(Sign sign, SkywarsMap map) {
-		Skywars.get().sendDebugMessage("&eUpdating sign (&a%s&e): &b%s", map.getName(), sign.getLocation());
-		final ArrayList<Arena> arenas = ArenaManager.getArenasByMap(map);
-		sign.setLine(0, Messager.color("&a%s", map.getName()));
-		sign.setLine(1, Messager.color("&b%s &earenas", arenas.size()));
-		sign.setLine(2, Messager.color("&b%s &eplayers",
-				arenas.stream().map(arena -> arena.getAlivePlayerCount()).reduce(0, (a, b) -> a + b)));
-		final Arena joinable = ArenaManager.getJoinableArenaByMap(map);
-		final int count = joinable != null ? joinable.getAlivePlayerCount() : 0;
-		if (joinable != null && count > 0) {
-			sign.setLine(3, Messager.color("&b%s &eof &c%s &eplayers waiting", count, map.getMaxPlayers()));
-		} else {
-			sign.setLine(3, Messager.color("&bClick to join!"));
-		}
-		sign.update(true);
 	}
 
 }

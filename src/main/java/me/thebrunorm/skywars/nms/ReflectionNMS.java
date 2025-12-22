@@ -1,18 +1,17 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.nms;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
+import me.thebrunorm.skywars.Skywars;
+import me.thebrunorm.skywars.singletons.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-import me.thebrunorm.skywars.Messager;
-import me.thebrunorm.skywars.Skywars;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public class ReflectionNMS implements NMS {
 
@@ -24,11 +23,11 @@ public class ReflectionNMS implements NMS {
 	// classes
 
 	Class<?> chatSerializer = this.getNMSSafe("ChatSerializer", "IChatBaseComponent$ChatSerializer");
+	Method chatSerializerA = this.getMethodSafe(this.chatSerializer, "a", String.class);
 	Class<?> iChatBaseComponent = this.getNMSSafe("IChatBaseComponent");
 	Class<?> packetPlayOutTitle = this.getNMSSafe("PacketPlayOutTitle");
 	Class<?> packetPlayOutChat = this.getNMSSafe("PacketPlayOutChat");
 	Class<?> enumTitleAction = this.getNMSSafe("EnumTitleAction", "PacketPlayOutTitle$EnumTitleAction");
-	Class<?> craftPlayerClass = this.getClassSafe("org.bukkit.craftbukkit." + this.version + ".entity.CraftPlayer");
 	Class<?> chatMessageTypeClass = this.getNMSSafe("ChatMessageType");
 	Class<?> packetPlayerListClass = this.getNMSSafe("PacketPlayOutPlayerListHeaderFooter");
 	Class<?> packetClass = this.getNMSSafe("Packet");
@@ -36,10 +35,10 @@ public class ReflectionNMS implements NMS {
 	// methods
 
 	Method sendPacketMethod = this.getMethodSafe(this.getNMSSafe("PlayerConnection"), "sendPacket", this.packetClass);
-	Method chatSerializerA = this.getMethodSafe(this.chatSerializer, "a", String.class);
+	Class<?> craftPlayerClass = this.getClassSafe("org.bukkit.craftbukkit." + this.version + ".entity.CraftPlayer");
+	Method getHandleMethod = this.getMethodSafe(this.craftPlayerClass, "getHandle");
 	Method sendTitleMethod = this.getMethodSafe(Player.class, "sendTitle", String.class, String.class, int.class,
 			int.class, int.class);
-	Method getHandleMethod = this.getMethodSafe(this.craftPlayerClass, "getHandle");
 	Method setPlayerListMethod = this.getMethodSafe(Player.class, "setPlayerListHeaderFooter", String.class,
 			String.class);
 
@@ -74,21 +73,6 @@ public class ReflectionNMS implements NMS {
 		return Class.forName(this.nms + "." + name);
 	}
 
-	private Object getConnection(Player player) throws Exception {
-		// CraftPlayer.getHandle();
-
-		final Object craftPlayerHandle = this.getHandleMethod.invoke(player);
-		// (CraftPlayer) player.getHandle();
-
-		final Field playerConnectionField = craftPlayerHandle.getClass().getField("playerConnection");
-		final Object playerConnection = playerConnectionField.get(craftPlayerHandle);
-		// (CraftPlayer) player.getHandle().playerConnection;
-
-		return playerConnection;
-	}
-
-	// methods
-
 	public void sendParticles(Location loc, String particle, int amount) {
 		// TODO instead of a try-catch, check version
 		final World world = loc.getWorld();
@@ -109,6 +93,8 @@ public class ReflectionNMS implements NMS {
 			}
 		}
 	}
+
+	// methods
 
 	public void sendParticles(Player player, String particle, int amount) {
 		this.sendParticles(player, player.getLocation(), particle, amount);
@@ -142,7 +128,7 @@ public class ReflectionNMS implements NMS {
 		// TODO instead of a try-catch, check version
 		try {
 			final Method a = this.chatSerializer.getMethod("a", String.class);
-			final Object chat = a.invoke(this.chatSerializer, "{\"text\":\"" + Messager.color(text) + "\"}");
+			final Object chat = a.invoke(this.chatSerializer, "{\"text\":\"" + MessageUtils.color(text) + "\"}");
 
 			Constructor<?> packetPlayOutChatConstructor;
 			Object packet;
@@ -185,7 +171,7 @@ public class ReflectionNMS implements NMS {
 
 				final Object value_actionbar = cmt.getMethod("valueOf", String.class).invoke(cmt, "ACTION_BAR");
 
-				final Object newInstanceOfThis = tc.getConstructor(String.class).newInstance(Messager.color(text));
+				final Object newInstanceOfThis = tc.getConstructor(String.class).newInstance(MessageUtils.color(text));
 
 				m_sm.setAccessible(true); // make the method public
 				m_sm.invoke(cp, cmt.cast(value_actionbar), bc.cast(newInstanceOfThis));
@@ -210,15 +196,15 @@ public class ReflectionNMS implements NMS {
 		// TODO instead of a try-catch, check version
 		try {
 			// player.sendTitle();
-			this.sendTitleMethod.invoke(player, Messager.color(title), Messager.color(subtitle), fadeIn, stay, fadeOut);
+			this.sendTitleMethod.invoke(player, MessageUtils.color(title), MessageUtils.color(subtitle), fadeIn, stay, fadeOut);
 		} catch (final Exception e) {
 			// 1.8
 			try {
 
 				final Method a = this.chatSerializer.getMethod("a", String.class);
-				final Object chatTitle = a.invoke(this.chatSerializer, "{\"text\":\"" + Messager.color(title) + "\"}");
+				final Object chatTitle = a.invoke(this.chatSerializer, "{\"text\":\"" + MessageUtils.color(title) + "\"}");
 				final Object chatSubtitle = a.invoke(this.chatSerializer,
-						"{\"text\":\"" + Messager.color(subtitle) + "\"}");
+						"{\"text\":\"" + MessageUtils.color(subtitle) + "\"}");
 
 				final Object enumTitleActionTitle = this.enumTitleAction.getEnumConstants()[0];
 				final Object enumTitleActionSubtitle = this.enumTitleAction.getEnumConstants()[1];
@@ -246,13 +232,17 @@ public class ReflectionNMS implements NMS {
 		}
 	}
 
-	public Object getSerializedChatComponent(Object o) {
-		try {
-			return this.chatSerializerA.invoke(this.chatSerializer, o);
-		} catch (final Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+	private Object getConnection(Player player) throws Exception {
+		// CraftPlayer.getHandle();
+
+		final Object craftPlayerHandle = this.getHandleMethod.invoke(player);
+		// (CraftPlayer) player.getHandle();
+
+		final Field playerConnectionField = craftPlayerHandle.getClass().getField("playerConnection");
+		final Object playerConnection = playerConnectionField.get(craftPlayerHandle);
+		// (CraftPlayer) player.getHandle().playerConnection;
+
+		return playerConnection;
 	}
 
 	public void sendTablist(Player player, String header, String footer) {
@@ -261,9 +251,9 @@ public class ReflectionNMS implements NMS {
 				final Object playerListPacket = this.packetPlayerListClass.getConstructor().newInstance();
 
 				final Object headerComponent = this
-						.getSerializedChatComponent("{\"text\":\"" + Messager.color(header) + "\"}");
+						.getSerializedChatComponent("{\"text\":\"" + MessageUtils.color(header) + "\"}");
 				final Object footerComponent = this
-						.getSerializedChatComponent("{\"text\":\"" + Messager.color(footer) + "\"}");
+						.getSerializedChatComponent("{\"text\":\"" + MessageUtils.color(footer) + "\"}");
 				final Field a = playerListPacket.getClass().getDeclaredField("a");
 				a.setAccessible(true);
 				a.set(playerListPacket, headerComponent);
@@ -281,6 +271,15 @@ public class ReflectionNMS implements NMS {
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public Object getSerializedChatComponent(Object o) {
+		try {
+			return this.chatSerializerA.invoke(this.chatSerializer, o);
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public void sendPacket(Player player, Object packet) {

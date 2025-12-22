@@ -1,8 +1,9 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.menus;
 
-import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
+import me.thebrunorm.skywars.singletons.MessageUtils;
+import me.thebrunorm.skywars.singletons.SkywarsEconomy;
 import me.thebrunorm.skywars.structures.Kit;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
@@ -24,80 +25,82 @@ import java.util.List;
 
 public class KitsMenu implements Listener {
 
-		public static void open(Player player) {
-			final Inventory inventory = Bukkit.createInventory(null, 9 * 3, Messager.getMessage("KIT_MENU_TITLE"));
-	
-			final Economy eco = Skywars.get().getEconomy();
-			double playerMoney = 0;
-			if (eco != null)
-				playerMoney = eco.getBalance(player);
-	
-			int index = 0;
-			for (final Kit kit : Skywars.get().getKits()) {
-				final ItemStack item = kit.getIcon();
-				final ItemMeta meta = item.getItemMeta();
-				meta.setDisplayName(Messager.color("&a" + kit.getDisplayName()));
-				final List<String> lore = new ArrayList<>();
-				for (final ItemStack i : kit.getItems()) {
-					String itemName = WordUtils.capitalizeFully(i.getType().name().replace("_", " "));
-					if (i.getAmount() > 1)
-						itemName += " x" + i.getAmount();
-					lore.add(Messager.color("&8" + itemName));
-				}
-				lore.add(Messager.color("&r"));
-				final boolean owned = Skywars.get().getPlayerConfig(player).getStringList("ownedKits")
-						.contains(kit.getName());
-				final boolean selected = Skywars.get().getPlayerKit(player) == kit;
-				final boolean premium = kit.getPrice() > 0;
-				final boolean selectable = true;
-				if (selected) {
-					lore.add(Messager.color(Messager.getMessage("KIT_MENU_SELECTED_KIT")));
-	
-					// TODO: make it work
-					item.addUnsafeEnchantment(Enchantment.LUCK, 1);
-					meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-				} else if (premium) {
-					if (owned)
-						lore.add(Messager.color(Messager.getMessage("KIT_MENU_YOU_OWN_THIS_KIT")));
-					else if (!owned) {
-						if (playerMoney >= kit.getPrice()) {
-							lore.add(Messager.color(Messager.getMessage("KIT_MENU_PRICE"), kit.getPrice()));
-							lore.add(Messager.color(Messager.getMessage("KIT_MENU_YOUR_MONEY"), playerMoney));
-							lore.add(Messager.color(Messager.getMessage("KIT_MENU_CLICK_TO_PURCHASE")));
-						} else {
-							lore.add(Messager.color(Messager.getMessage("KIT_MENU_NOT_ENOUGH_MONEY_PRICE"), kit.getPrice()));
-							lore.add(Messager.color(Messager.getMessage("KIT_MENU_NOT_ENOUGH_MONEY_YOUR_MONEY"), playerMoney));
-							lore.add(Messager.color(Messager.getMessage("KIT_MENU_YOU_DONT_HAVE_THIS_KIT")));
-						}
-					}
-				} else if (!premium)
-					lore.add(Messager.color(Messager.getMessage("KIT_MENU_THIS_KIT_IS_FREE")));
-	
-				if (!selected && selectable)
-					lore.add(Messager.color(Messager.getMessage("KIT_MENU_CLICK_TO_SELECT")));
-	
-				meta.setLore(lore);
-				item.setItemMeta(meta);
-				inventory.setItem(index, item);
-	
-				index++;
+	public static void open(Player player) {
+		final Inventory inventory = Bukkit.createInventory(null, 9 * 3, Messager.getMessage("KIT_MENU_TITLE"));
+
+		final Economy eco = Skywars.get().getEconomy();
+		double playerMoney = 0;
+		if (eco != null)
+			playerMoney = eco.getBalance(player);
+
+		int index = 0;
+		for (final Kit kit : Skywars.get().getKits()) {
+			final ItemStack item = kit.getIcon();
+			final ItemMeta meta = item.getItemMeta();
+			meta.setDisplayName(Messager.color("&a" + kit.getDisplayName()));
+			final List<String> lore = new ArrayList<>();
+			for (final ItemStack i : kit.getItems()) {
+				String itemName = WordUtils.capitalizeFully(i.getType().name().replace("_", " "));
+				if (i.getAmount() > 1)
+					itemName += " x" + i.getAmount();
+				lore.add(Messager.color("&8" + itemName));
 			}
-			player.openInventory(inventory);
-			PlayerInventoryManager.setMenu(player, MenuType.KIT_SELECTION);
+			lore.add(Messager.color("&r"));
+			final boolean owned = Skywars.get().getPlayerConfig(player).getStringList("ownedKits")
+					.contains(kit.getName());
+			final boolean selected = Skywars.get().getPlayerKit(player) == kit;
+			final boolean premium = kit.getPrice() > 0;
+			final boolean selectable = true;
+			if (selected) {
+				lore.add(Messager.color(Messager.getMessage("KIT_MENU_SELECTED_KIT")));
+
+				// TODO: make it work
+				item.addUnsafeEnchantment(Enchantment.LUCK, 1);
+				meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+			} else if (premium) {
+				if (owned)
+					lore.add(Messager.color(Messager.getMessage("KIT_MENU_YOU_OWN_THIS_KIT")));
+				else if (!owned) {
+					if (playerMoney >= kit.getPrice()) {
+						lore.add(Messager.color(Messager.getMessage("KIT_MENU_PRICE"), kit.getPrice()));
+						lore.add(Messager.color(Messager.getMessage("KIT_MENU_YOUR_MONEY"), playerMoney));
+						lore.add(Messager.color(Messager.getMessage("KIT_MENU_CLICK_TO_PURCHASE")));
+					} else {
+						lore.add(Messager.color(Messager.getMessage("KIT_MENU_NOT_ENOUGH_MONEY_PRICE"), kit.getPrice()));
+						lore.add(Messager.color(Messager.getMessage("KIT_MENU_NOT_ENOUGH_MONEY_YOUR_MONEY"), playerMoney));
+						lore.add(Messager.color(Messager.getMessage("KIT_MENU_YOU_DONT_HAVE_THIS_KIT")));
+					}
+				}
+			} else if (!premium)
+				lore.add(Messager.color(Messager.getMessage("KIT_MENU_THIS_KIT_IS_FREE")));
+
+			if (!selected && selectable)
+				lore.add(Messager.color(Messager.getMessage("KIT_MENU_CLICK_TO_SELECT")));
+
+			meta.setLore(lore);
+			item.setItemMeta(meta);
+			inventory.setItem(index, item);
+
+			index++;
 		}
+		player.openInventory(inventory);
+		PlayerInventoryManager.setMenu(player, MenuType.KIT_SELECTION);
+	}
+
 	@EventHandler
 	void onClick(InventoryClickEvent event) {
-		final Player player = (Player) event.getWhoClicked();
-		if (PlayerInventoryManager.getCurrentMenu(player) != MenuType.KIT_SELECTION)
-			return;
+		Player player = (Player) event.getWhoClicked();
+		if (PlayerInventoryManager.getCurrentMenu(player) != MenuType.KIT_SELECTION) return;
+
 		event.setCancelled(true);
-		final ItemStack clicked = event.getCurrentItem();
-		if (clicked == null || clicked.getItemMeta() == null)
-			return;
-		final String name = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
-		final Kit kit = Skywars.get().getKit(name);
+		ItemStack clicked = event.getCurrentItem();
+		if (clicked == null || clicked.getItemMeta() == null) return;
+
+		String kitName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
+		Kit kit = Skywars.get().getKit(kitName);
+
 		if (kit == null) {
-			player.sendMessage(Messager.getMessage("ERROR_COULD_NOT_SELECT_KIT"));
+			player.sendMessage(MessageUtils.getMessage("ERROR_COULD_NOT_SELECT_KIT"));
 			return;
 		}
 		boolean selected = false;
@@ -120,9 +123,119 @@ public class KitsMenu implements Listener {
 		}
 		if (selected) {
 			Skywars.get().setPlayerKit(player, kit);
-			player.sendMessage(Messager.getMessage("KIT_SELECTED_FORMAT", name));
+			player.sendMessage(MessageUtils.getMessage("KIT_SELECTED_FORMAT", kitName));
 		}
 		open(player);
 	}
 
+	private boolean handleKitSelection(Player player, Kit kit) {
+		if (kit.getPrice() <= 0 || Skywars.get().getPlayerConfig(player).getStringList("ownedKits").contains(kit.getName())) {
+			return true;
+		} else if (SkywarsEconomy.getEconomy().getBalance(player) >= kit.getPrice()) {
+			purchaseKit(player, kit);
+			return true;
+		} else {
+			player.sendMessage(MessageUtils.color("&cYou don't have this kit!"));
+			return false;
+		}
+	}
+
+	public static void open(Player player) {
+		Inventory inventory = createInventory();
+		populateInventory(inventory, player);
+		player.openInventory(inventory);
+		PlayerInventoryManager.setMenu(player, MenuType.KIT_SELECTION);
+	}
+
+	private void purchaseKit(Player player, Kit kit) {
+		YamlConfiguration config = Skywars.get().getPlayerConfig(player);
+		List<String> ownedKits = config.getStringList("ownedKits");
+		ownedKits.add(kit.getName());
+		config.set("ownedKits", ownedKits);
+		Skywars.get().savePlayerConfig(player, config);
+		player.sendMessage(MessageUtils.color("&bBought kit &e" + kit.getDisplayName()));
+	}
+
+	private static Inventory createInventory() {
+		return Bukkit.createInventory(null, INVENTORY_SIZE, MessageUtils.color("&aKits"));
+	}
+
+	private static void populateInventory(Inventory inventory, Player player) {
+		Economy eco = SkywarsEconomy.getEconomy();
+		double playerMoney = eco != null ? eco.getBalance(player):0;
+
+		int index = 0;
+		for (Kit kit : Skywars.get().getKits()) {
+			ItemStack item = kit.getIcon();
+			ItemMeta meta = item.getItemMeta();
+			meta.setDisplayName(MessageUtils.color("&a" + kit.getDisplayName()));
+
+			List<String> lore = buildKitLore(kit, player, playerMoney);
+			meta.setLore(lore);
+
+			if (isSelectedKit(player, kit)) {
+				applySelectedKitEnchantment(item, meta);
+			}
+
+			item.setItemMeta(meta);
+			inventory.setItem(index++, item);
+		}
+	}
+
+	private static List<String> buildKitLore(Kit kit, Player player, double playerMoney) {
+		List<String> lore = new ArrayList<>();
+		addKitItemsToLore(kit, lore);
+		addKitStatusToLore(kit, player, playerMoney, lore);
+		return lore;
+	}
+
+	private static boolean isSelectedKit(Player player, Kit kit) {
+		return Skywars.get().getPlayerKit(player) == kit;
+	}
+
+	private static void applySelectedKitEnchantment(ItemStack item, ItemMeta meta) {
+		item.addUnsafeEnchantment(Enchantment.LUCK, 1);
+		meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+	}
+
+	private static void addKitItemsToLore(Kit kit, List<String> lore) {
+		for (ItemStack i : kit.getItems()) {
+			String itemName = WordUtils.capitalizeFully(i.getType().name().replace("_", " "));
+			if (i.getAmount() > 1) itemName += " x" + i.getAmount();
+			lore.add(MessageUtils.color("&8" + itemName));
+		}
+		lore.add(MessageUtils.color("&r"));
+	}
+
+	private static void addKitStatusToLore(Kit kit, Player player, double playerMoney, List<String> lore) {
+		boolean owned = Skywars.get().getPlayerConfig(player).getStringList("ownedKits").contains(kit.getName());
+		boolean selected = Skywars.get().getPlayerKit(player) == kit;
+		boolean premium = kit.getPrice() > 0;
+
+		if (selected) {
+			lore.add(MessageUtils.color("&6Selected kit"));
+		} else if (premium) {
+			handlePremiumKit(kit, playerMoney, owned, lore);
+		} else {
+			lore.add(MessageUtils.color("&aThis kit is free!"));
+		}
+
+		if (!selected) {
+			lore.add(MessageUtils.color("&eClick to select!"));
+		}
+	}
+
+	private static void handlePremiumKit(Kit kit, double playerMoney, boolean owned, List<String> lore) {
+		if (owned) {
+			lore.add(MessageUtils.color("&aYou own this kit!"));
+		} else if (playerMoney >= kit.getPrice()) {
+			lore.add(MessageUtils.color("&aPrice: " + kit.getPrice()));
+			lore.add(MessageUtils.color("&6Your money: &a" + playerMoney));
+			lore.add(MessageUtils.color("&aClick to purchase this kit!"));
+		} else {
+			lore.add(MessageUtils.color("&cPrice: " + kit.getPrice()));
+			lore.add(MessageUtils.color("&6Your money: &c" + playerMoney));
+			lore.add(MessageUtils.color("&cYou don't have this kit!"));
+		}
+	}
 }

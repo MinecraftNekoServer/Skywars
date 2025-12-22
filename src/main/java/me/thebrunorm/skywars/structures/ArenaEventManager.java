@@ -1,8 +1,11 @@
+// Copyright (c) 2025 Bruno
+
 package me.thebrunorm.skywars.structures;
 
-import me.thebrunorm.skywars.ArenaStatus;
-import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
+import me.thebrunorm.skywars.enums.ArenaStatus;
+import me.thebrunorm.skywars.enums.SkywarsEventType;
+import me.thebrunorm.skywars.singletons.MessageUtils;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -24,15 +27,15 @@ public class ArenaEventManager {
 			return Skywars.langConfig.getString("status.ended");
 		final SkywarsEvent event = this.getNextEvent();
 		if (event == null)
-			return Messager.getMessage("events.no_event");
+			return MessageUtils.get("events.no_event");
 		final int time = event.getTime();
 		final int minutes = time / 60;
 		final int seconds = time % 60;
 		final String timeString = String.format("%d:%02d", minutes, seconds);
 		final String eventNameKey = String.format("events.%s.name", event.getType().name());
-		return Messager.color(Skywars.langConfig.getString("events.format", "<events.format>")
-			.replaceAll("%name%", Skywars.langConfig.getString(eventNameKey, String.format("<%s>", eventNameKey)))
-			.replaceAll("%time%", timeString));
+		return MessageUtils.color(Skywars.langConfig.getString("events.format", "<events.format>")
+				.replaceAll("%name%", Skywars.langConfig.getString(eventNameKey, String.format("<%s>", eventNameKey)))
+				.replaceAll("%time%", timeString));
 
 	}
 

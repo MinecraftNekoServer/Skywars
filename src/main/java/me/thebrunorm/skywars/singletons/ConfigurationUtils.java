@@ -1,15 +1,21 @@
-/* (C) 2021 Bruno */
-package me.thebrunorm.skywars;
+// Copyright (c) 2025 Bruno
+package me.thebrunorm.skywars.singletons;
 
 import com.cryptomorin.xseries.XMaterial;
+import me.thebrunorm.skywars.Skywars;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -20,24 +26,13 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-public class ConfigurationUtils {
+public enum ConfigurationUtils {
+	;
 
 	public static final int DEFAULT_BUFFER_SIZE = 8192;
 
-	private static void copyInputStreamToFile(InputStream inputStream, File file) throws IOException {
-
-		try (FileOutputStream outputStream = new FileOutputStream(file, false)) {
-			int read;
-			final byte[] bytes = new byte[DEFAULT_BUFFER_SIZE];
-			while ((read = inputStream.read(bytes)) != -1) {
-				outputStream.write(bytes, 0, read);
-			}
-		}
-
-	}
-
 	public static YamlConfiguration loadConfiguration(String fileName, String defaultFileName,
-			String altDefaultFileName) {
+													  String altDefaultFileName) {
 		if (Skywars.get().getResource(defaultFileName) == null)
 			return loadConfiguration(fileName, altDefaultFileName);
 		return createMissingKeys(loadConfiguration(fileName, defaultFileName), getDefaultConfig(altDefaultFileName),
@@ -55,7 +50,7 @@ public class ConfigurationUtils {
 	}
 
 	public static YamlConfiguration createMissingKeys(YamlConfiguration conf, YamlConfiguration defaultConfig,
-			String fileName) {
+													  String fileName) {
 
 		try {
 			final ConfigurationSection section = defaultConfig.getConfigurationSection("");
@@ -83,10 +78,12 @@ public class ConfigurationUtils {
 	}
 
 	static YamlConfiguration getDefaultConfig(String defaultFileName) {
-				final InputStream stream = Skywars.get().getResource(defaultFileName);
-				if (stream == null) {
-					org.bukkit.Bukkit.getConsoleSender().sendMessage(Skywars.get().getPrefix() + " Could not get resource: " + defaultFileName);			return null;
-				}		final Reader defaultConfigStream = new InputStreamReader(stream, StandardCharsets.UTF_8);
+		final InputStream stream = Skywars.get().getResource(defaultFileName);
+		if (stream == null) {
+			Skywars.get().sendMessage("Could not get resource: " + defaultFileName);
+			return null;
+		}
+		final Reader defaultConfigStream = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		return YamlConfiguration.loadConfiguration(defaultConfigStream);
 	}
 
@@ -107,6 +104,18 @@ public class ConfigurationUtils {
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void copyInputStreamToFile(InputStream inputStream, File file) throws IOException {
+
+		try (FileOutputStream outputStream = new FileOutputStream(file, false)) {
+			int read;
+			final byte[] bytes = new byte[DEFAULT_BUFFER_SIZE];
+			while ((read = inputStream.read(bytes)) != -1) {
+				outputStream.write(bytes, 0, read);
+			}
+		}
+
 	}
 
 	public static void saveConfiguration(YamlConfiguration config, String path) {
@@ -138,7 +147,12 @@ public class ConfigurationUtils {
 	public static Location getLocationConfig(World world, ConfigurationSection section) {
 		if (section == null)
 			return null;
-		return new Location(world, section.getInt("x"), section.getInt("y"), section.getInt("z"));
+		Vector vector = getVectorFromConfigSection(section);
+		return new Location(world, vector.getX(), vector.getY(), vector.getZ());
+	}
+
+	public static Vector getVectorFromConfigSection(ConfigurationSection section) {
+		return new Vector(section.getInt("x"), section.getInt("y"), section.getInt("z"));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -150,61 +164,97 @@ public class ConfigurationUtils {
 		else return null;
 	}
 
+	private static @Nullable ItemStack parseItemFromString(String a) {
+		final String[] splitted = a.split("[\\s\\W]+");
+		final Optional<XMaterial> xmat = XMaterial.matchXMaterial(splitted[0]);
+
+		if (!xmat.isPresent()) return null;
+
+		final Material mat = xmat.get().parseMaterial();
+		if (mat == null) return null;
+
+		final int amount = getItemAmountOrDefault(splitted[1], mat);
+		return new ItemStack(mat, amount);
+	}
+
+	@SuppressWarnings("unchecked")
 	private static @Nullable ItemStack parseItemFromHashMap(HashMap<Object, Object> hashmap) {
+
 		if (hashmap.size() == 1) {
 			final Entry<Object, Object> b = hashmap.entrySet().iterator().next();
 			final Optional<XMaterial> xmat = XMaterial.matchXMaterial(b.getKey().toString());
-			if (xmat.isEmpty())
-				return null;
+			if (!xmat.isPresent()) return null;
+
 			final Material mat = xmat.get().parseMaterial();
 			final int amount = Integer.parseInt(b.getValue().toString());
 			return new ItemStack(mat, amount);
 		}
 
 		final Optional<XMaterial> xmat = XMaterial.matchXMaterial(hashmap.get("type").toString());
-		if (xmat.isEmpty())
-			return null;
 
-		final Material mat = xmat.get().parseMaterial();
-		int amount = mat.getMaxStackSize();
-		if (hashmap.containsKey("amount"))
-			try {
-				amount = Integer.parseInt(hashmap.get("amount").toString());
-			} catch (final NumberFormatException ignored) {
-			}
+		Material mat = xmat.isPresent() ? xmat.get().parseMaterial() : Material.BEDROCK;
+		int amount = getItemAmountOrDefault(hashmap.get("amount").toString(), mat);
 
-		final ItemStack item = new ItemStack(mat, amount);
-		final ItemMeta meta = item.getItemMeta();
+		ItemStack item = new ItemStack(mat, amount);
+		ItemMeta meta = item.getItemMeta();
 
-		if (hashmap.containsKey("name")) {
-			final String itemName = hashmap.get("name").toString();
-			meta.setDisplayName(Messager.color(itemName));
+		if (hashmap.containsKey("name"))
+			meta.setDisplayName(MessageUtils.color(hashmap.get("name").toString()));
+
+		if (hashmap.containsKey("lore")) {
+			List<String> lore = new ArrayList<>();
+			Object loreObj = hashmap.get("lore");
+
+			if (loreObj instanceof List<?>)
+				for (Object line : (List<?>) loreObj)
+					lore.add(MessageUtils.color(line.toString()));
+			else
+				lore.add(MessageUtils.color(loreObj.toString()));
+
+			meta.setLore(lore);
 		}
 
-		final Object lore = hashmap.get("lore");
-		if (lore != null) {
-			final List<String> loreLines = new ArrayList<>();
-			if (lore instanceof String)
-				loreLines.add(Messager.color(lore.toString()));
-			else if (lore instanceof ArrayList)
-				for (final String loreLine : ((ArrayList<String>) lore))
-					loreLines.add(Messager.color(loreLine));
-			meta.setLore(loreLines);
+		if (hashmap.containsKey("enchants")) {
+			HashMap<String, Object> enchants = (HashMap<String, Object>) hashmap.get("enchants");
+			for (Entry<String, Object> e : enchants.entrySet()) {
+				Enchantment enchant = Enchantment.getByName(e.getKey().toUpperCase());
+				if (enchant != null)
+					meta.addEnchant(enchant, Integer.parseInt(e.getValue().toString()), true);
+			}
+		}
+
+		if (meta instanceof PotionMeta) {
+
+			PotionMeta potionMeta = (PotionMeta) meta;
+
+			// Custom effects
+			if (hashmap.containsKey("effects")) {
+				HashMap<String, Object> effects = (HashMap<String, Object>) hashmap.get("effects");
+
+				for (Entry<String, Object> e : effects.entrySet()) {
+					PotionEffectType effect = PotionEffectType.getByName(e.getKey().toUpperCase());
+					if (effect != null) {
+						int level = Integer.parseInt(e.getValue().toString()) - 1;
+						potionMeta.addCustomEffect(
+								new PotionEffect(effect, 20 * 30, level),
+								true
+						);
+					}
+				}
+			}
 		}
 
 		item.setItemMeta(meta);
 		return item;
 	}
 
-	private static @Nullable ItemStack parseItemFromString(String a) {
-		final String[] splitted = a.split("[\\s\\W]+");
-		final Optional<XMaterial> xmat = XMaterial.matchXMaterial(splitted[0]);
-
-		if (xmat.isEmpty())
-			return null;
-
-		final Material mat = xmat.get().parseMaterial();
-		final int amount = splitted.length > 1 ? Integer.parseInt(splitted[1]) : mat.getMaxStackSize();
-		return new ItemStack(mat, amount);
+	static int getItemAmountOrDefault(String text, Material mat) {
+		if (!text.isEmpty())
+			try {
+				return Integer.parseInt(text);
+			} catch (Exception ignored) {
+			}
+		return mat.getMaxStackSize();
 	}
+
 }

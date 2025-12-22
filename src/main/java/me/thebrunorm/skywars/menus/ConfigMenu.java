@@ -1,16 +1,14 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.menus;
 
 import com.cryptomorin.xseries.XMaterial;
-import me.thebrunorm.skywars.ConfigurationUtils;
-import me.thebrunorm.skywars.InventoryUtils;
-import me.thebrunorm.skywars.Messager;
 import me.thebrunorm.skywars.Skywars;
-import me.thebrunorm.skywars.events.SetupEvents;
 import me.thebrunorm.skywars.managers.ArenaManager;
+import me.thebrunorm.skywars.singletons.InventoryUtils;
+import me.thebrunorm.skywars.singletons.MessageUtils;
+import me.thebrunorm.skywars.singletons.SkywarsUtils;
 import me.thebrunorm.skywars.structures.Arena;
 import me.thebrunorm.skywars.structures.SkywarsMap;
-import mrblobman.sounds.Sounds;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,9 +19,13 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.util.Vector;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,145 +33,157 @@ import java.util.Objects;
 
 public class ConfigMenu implements Listener {
 
-		public final static HashMap<Player, Location> playerLocations = new HashMap<>();
-		public final static HashMap<Player, Arena> currentArenas = new HashMap<>();
-		final static String teamSizeName = Messager.getMessage("CONFIG_MENU_TEAM_SIZE");
-		final static String positionName = Messager.getMessage("CONFIG_MENU_POSITION");
-		final static String spawnName = Messager.getMessage("CONFIG_MENU_SPAWN_SETUP");
-		final static String worldFolderName = Messager.getMessage("CONFIG_MENU_WORLD");
-		final static String statusName = Messager.getMessage("CONFIG_MENU_STATUS");
-		final static String calculateSpawnsName = Messager.getMessage("CONFIG_MENU_CALCULATE_SPAWNS");
-		final static String regenerateCasesName = Messager.getMessage("CONFIG_MENU_REGENERATE_CASES");
-		final static String pasteSchematicName = Messager.getMessage("CONFIG_MENU_PASTE_SCHEMATIC");
-		final static String clearName = Messager.getMessage("CONFIG_MENU_CLEAR");
-		final static String teleportName = Messager.getMessage("CONFIG_MENU_TELEPORT");
-		final static String chestsName = Messager.getMessage("CONFIG_MENU_FILL_CHESTS");
-		final File worldsFolder = new File(Skywars.worldsPath);
-	
-		static void OpenWorldsMenu(Player player) {
-			final File folder = new File(Skywars.get().getDataFolder() + "/worlds");
-			final Inventory inventory = Bukkit.createInventory(null, 9 * 6, Messager.getMessage("CONFIG_MENU_WORLD_FOLDERS"));
-	
-			int index = 10;
-			for (final File worldFolder : Objects.requireNonNull(folder.listFiles())) {
-				final List<String> lore = new ArrayList<>();
-	
-				boolean alreadyUsing = false;
-				for (final SkywarsMap map : Skywars.get().getMapManager().getMaps()) {
-					final String worldName = map.getWorldName();
-					if (worldName != null && worldName.equals(worldFolder.getName())) {
-						if (map == currentArenas.get(player).getMap()) {
-							lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_CURRENT_WORLD_FOLDER"), map.getName()));
-						} else {
-							lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_WARNING_WORLD_FOLDER_IN_USE"), map.getName()));
-						}
-						alreadyUsing = true;
-						break;
+	public final static HashMap<Player, Location> playerLocations = new HashMap<>();
+	public final static HashMap<Player, Arena> currentArenas = new HashMap<>();
+	final static String teamSizeName = Messager.getMessage("CONFIG_MENU_TEAM_SIZE");
+	final static String positionName = Messager.getMessage("CONFIG_MENU_POSITION");
+	final static String spawnName = Messager.getMessage("CONFIG_MENU_SPAWN_SETUP");
+	final static String worldFolderName = Messager.getMessage("CONFIG_MENU_WORLD");
+	final static String statusName = Messager.getMessage("CONFIG_MENU_STATUS");
+	final static String calculateSpawnsName = Messager.getMessage("CONFIG_MENU_CALCULATE_SPAWNS");
+	final static String regenerateCasesName = Messager.getMessage("CONFIG_MENU_REGENERATE_CASES");
+	final static String reloadWorld = Messager.getMessage("CONFIG_MENU_WORLD_RELOAD");
+	final static String saveWorld = Messager.getMessage("CONFIG_MENU_WORLD_SAVE");
+	final static String clearName = Messager.getMessage("CONFIG_MENU_CLEAR");
+	final static String teleportName = Messager.getMessage("CONFIG_MENU_TELEPORT");
+	final static String chestsName = Messager.getMessage("CONFIG_MENU_FILL_CHESTS");
+	final File worldsFolder = new File(Skywars.worldsPath);
+
+	static void OpenWorldsMenu(Player player) {
+		final File folder = new File(Skywars.get().getDataFolder() + "/worlds");
+		final Inventory inventory = Bukkit.createInventory(null, 9 * 6, Messager.color("&aWorld folders"));
+
+		int index = 10;
+		for (final File worldFolder : Objects.requireNonNull(folder.listFiles())) {
+			final List<String> lore = new ArrayList<>();
+
+			boolean alreadyUsing = false;
+			for (final SkywarsMap map : Skywars.get().getMapManager().getMaps()) {
+				final String worldName = map.getWorldName();
+				if (worldName != null && worldName.equals(worldFolder.getName())) {
+					if (map == currentArenas.get(player).getMap()) {
+						lore.add(Messager.color("&6Current world folder", map.getName()));
+					} else {
+						lore.add(Messager.color("&cWarning! %s already uses this world folder", map.getName()));
 					}
+					alreadyUsing = true;
+					break;
 				}
-	
-				if (!alreadyUsing)
-					lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_CLICK_TO_SELECT_FILE")));
-	
-				final ItemStack item = new ItemStack(Objects.requireNonNull(XMaterial.PAPER.parseItem()));
-				final ItemMeta meta = item.getItemMeta();
-	
-				meta.setDisplayName(Messager.color("&a%s", worldFolder.getName()));
-				meta.setLore(lore);
-				item.setItemMeta(meta);
-				inventory.setItem(index, item);
-				index++;
 			}
-	
-			player.openInventory(inventory);
-			PlayerInventoryManager.setMenu(player, MenuType.MAP_SCHEMATIC);
+
+			if (!alreadyUsing)
+				lore.add(Messager.color("&eClick to select this file"));
+
+			final ItemStack item = new ItemStack(Objects.requireNonNull(XMaterial.PAPER.parseItem()));
+			final ItemMeta meta = item.getItemMeta();
+
+			meta.setDisplayName(Messager.color("&a%s", worldFolder.getName()));
+			meta.setLore(lore);
+			item.setItemMeta(meta);
+			inventory.setItem(index, item);
+			index++;
 		}
+
+		player.openInventory(inventory);
+		PlayerInventoryManager.setMenu(player, MenuType.MAP_SCHEMATIC);
+	}
+
 	static void addItemToInventory(Inventory inv, Material mat, int slot, String name, String... loreLines) {
 		final ItemStack item = new ItemStack(mat);
 		final ItemMeta meta = item.getItemMeta();
-		meta.setDisplayName(Messager.color(name));
+		meta.setDisplayName(MessageUtils.color(name));
 		final List<String> lore = new ArrayList<>();
 		for (final String line : loreLines)
-			lore.add(Messager.color("&e" + line));
+			lore.add(MessageUtils.color("&e" + line));
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 		inv.setItem(slot, item);
 	}
 
-		static void UpdateInventory(Player player) {
-			final InventoryView openInv = player.getOpenInventory();
-			if (openInv == null)
-				return;
-			final Inventory inventory = openInv.getTopInventory();
-			if (inventory == null)
-				return;
-			final Arena currentArena = currentArenas.get(player);
-			if (currentArena == null)
-				return;
-			final SkywarsMap currentMap = currentArena.getMap();
-	
-			InventoryUtils.addItem(inventory, XMaterial.SADDLE.parseMaterial(), 11,
-					Messager.color(teamSizeName, currentMap.getTeamSize()), Messager.getMessage("CONFIG_MENU_LEFT_CLICK_ADD"),
-					Messager.getMessage("CONFIG_MENU_RIGHT_CLICK_REMOVE"));
-	
-			String currentWorldFile = currentMap.getWorldName();
-			if (currentWorldFile == null)
-				currentWorldFile = "none";
-	
-			InventoryUtils.addItem(inventory, XMaterial.PAPER.parseMaterial(), 14,
-					Messager.color(worldFolderName, currentWorldFile));
-	
-			InventoryUtils.addItem(inventory, XMaterial.GLASS.parseMaterial(), 15,
-					Messager.color(statusName, "&6&lYES"));
-	
-			final List<String> spawnLore = new ArrayList<>();
-			spawnLore.add(Messager.color(Messager.getMessage("CONFIG_MENU_WHEN_ENTER_SPAWN_SETUP_MODE")));
-			spawnLore.add(Messager.color(Messager.getMessage("CONFIG_MENU_YOU_CAN_CLICK_BLOCKS_ON_ARENA_HINT")));
-			spawnLore.add(Messager.color(Messager.getMessage("CONFIG_MENU_TO_SET_SPAWNS_EASILY")));
-			if (!currentMap.getSpawns().isEmpty()) {
-				spawnLore.add(Messager.color(""));
-				spawnLore.add(Messager.color(Messager.getMessage("CONFIG_MENU_THIS_WILL_DELETE_CURRENT_SPAWNS")));
-			}
-	
-			InventoryUtils.addItem(inventory, XMaterial.BLAZE_ROD.parseMaterial(), 16, spawnName,
-					spawnLore.toArray(new String[0]));
-	
-			InventoryUtils.addItem(inventory, XMaterial.GLASS.parseMaterial(), 18, regenerateCasesName);
-	
-			InventoryUtils.addItem(inventory, XMaterial.BEACON.parseMaterial(), 19, calculateSpawnsName,
-					Messager.getMessage("CONFIG_MENU_THIS_WILL_DELETE_CURRENT_SPAWNS"));
-	
-			InventoryUtils.addItem(inventory, XMaterial.WOODEN_AXE.parseMaterial(), 20, pasteSchematicName,
-					Messager.getMessage("CONFIG_MENU_THIS_WILL_REGENERATE_MAP"));
-	
-			InventoryUtils.addItem(inventory, XMaterial.BARRIER.parseMaterial(), 21, clearName);
-	
-			InventoryUtils.addItem(inventory, XMaterial.COMPASS.parseMaterial(), 22, teleportName);
-	
-			InventoryUtils.addItem(inventory, XMaterial.CHEST.parseMaterial(), 23, chestsName);
-	
+	public static void OpenConfigurationMenu(Player player, SkywarsMap map) {
+		currentArenas.put(player, ArenaManager.getArenaByMap(map, true));
+		final Inventory inventory = Bukkit.createInventory(null, 9 * 3, MessageUtils.color("&a&l" + map.getName()));
+		player.openInventory(inventory);
+		PlayerInventoryManager.setMenu(player, MenuType.MAP_CONFIGURATION);
+		UpdateInventory(player);
+	}
+
+	static void UpdateInventory(Player player) {
+		final InventoryView openInv = player.getOpenInventory();
+		if (openInv == null)
+			return;
+		final Inventory inventory = openInv.getTopInventory();
+		if (inventory == null)
+			return;
+		final Arena currentArena = currentArenas.get(player);
+		if (currentArena == null)
+			return;
+		final SkywarsMap currentMap = currentArena.getMap();
+
+		InventoryUtils.addItem(inventory, XMaterial.SADDLE.parseMaterial(), 11,
+			Messager.color(teamSizeName, currentMap.getTeamSize()),
+			Messager.getMessage("CONFIG_MENU_LEFT_CLICK_ADD"),
+			Messager.getMessage("CONFIG_MENU_RIGHT_CLICK_REMOVE"));
+
+		String currentWorldFile = currentMap.getWorldName();
+		if (currentWorldFile == null)
+			currentWorldFile = "none";
+
+		InventoryUtils.addItem(inventory, XMaterial.PAPER.parseMaterial(), 14,
+				Messager.color(worldFolderName, currentWorldFile));
+
+		InventoryUtils.addItem(inventory, XMaterial.GLASS.parseMaterial(), 15,
+				Messager.color(statusName, "&6&lYES"));
+
+		final List<String> spawnLore = new ArrayList<>();
+		spawnLore.add(Messager.color("&eWhen you enter &bSpawn Setup Mode&e,"));
+		spawnLore.add(Messager.color("&eyou can click blocks on the arena"));
+		spawnLore.add(Messager.color("&eto set spawns easily."));
+		if (!currentMap.getSpawns().isEmpty()) {
+			spawnLore.add(Messager.color(""));
+			spawnLore.add(Messager.color("&cThis will delete all current spawns."));
 		}
-	
-		public static void OpenConfigurationMenu(Player player, SkywarsMap map) {
-			currentArenas.put(player, ArenaManager.getArenaByMap(map, true));
-			final Inventory inventory = Bukkit.createInventory(null, 9 * 3, Messager.color(Messager.getMessage("CONFIG_MENU_TITLE", map.getName())));
-			player.openInventory(inventory);
-			PlayerInventoryManager.setMenu(player, MenuType.MAP_CONFIGURATION);
-			UpdateInventory(player);
-		}
-	
-		static String locationName(Location location) {
-			if (location == null)
-				return Messager.color(positionName, "none");
-			final String positionString = String.format("%s, %s, %s", (double) location.getBlockX(),
-				(double) location.getBlockY(), (double) location.getBlockZ());
-			return Messager.color(positionName, positionString);
-		}
+
+		InventoryUtils.addItem(inventory, XMaterial.BLAZE_ROD.parseMaterial(), 16, spawnName,
+				spawnLore.toArray(new String[0]));
+
+		InventoryUtils.addItem(inventory, XMaterial.GLASS.parseMaterial(), 18, regenerateCasesName);
+
+		InventoryUtils.addItem(inventory, XMaterial.BEACON.parseMaterial(), 19, calculateSpawnsName,
+				"&cThis will override current spawns.");
+
+		InventoryUtils.addItem(inventory, XMaterial.WOODEN_AXE.parseMaterial(), 20, pasteSchematicName,
+				"&cThis will regenerate the map.");
+
+		InventoryUtils.addItem(inventory, XMaterial.BARRIER.parseMaterial(), 21, clearName);
+
+		InventoryUtils.addItem(inventory, XMaterial.COMPASS.parseMaterial(), 22, teleportName);
+
+		InventoryUtils.addItem(inventory, XMaterial.CHEST.parseMaterial(), 23, chestsName);
+
+	}
+
+	public static void OpenConfigurationMenu(Player player, SkywarsMap map) {
+		currentArenas.put(player, ArenaManager.getArenaByMap(map, true));
+		final Inventory inventory = Bukkit.createInventory(null, 9 * 3, Messager.color("&a&l" + map.getName()));
+		player.openInventory(inventory);
+		PlayerInventoryManager.setMenu(player, MenuType.MAP_CONFIGURATION);
+		UpdateInventory(player);
+	}
+
+	static String locationName(Location location) {
+		if (location == null)
+			return Messager.color(positionName, "none");
+		final String positionString = String.format("%s, %s, %s", (double) location.getBlockX(),
+			(double) location.getBlockY(), (double) location.getBlockZ());
+		return Messager.color(positionName, positionString);
+	}
+
 	@EventHandler
 	void onClick(InventoryClickEvent event) {
 		final Player player = (Player) event.getWhoClicked();
 		final MenuType currentMenu = PlayerInventoryManager.getCurrentMenu(player);
-		if (currentMenu != MenuType.MAP_CONFIGURATION && currentMenu != MenuType.MAP_SCHEMATIC)
+		if (currentMenu != MenuType.MAP_CONFIGURATION && currentMenu != MenuType.MAP_CONFIG_WORLD_SELECTION)
 			return;
 		event.setCancelled(true);
 		final ItemStack clicked = event.getCurrentItem();
@@ -183,61 +197,24 @@ public class ConfigMenu implements Listener {
 
 		final SkywarsMap currentMap = currentArena.getMap();
 
-		if (name.equals(Messager.color(teamSizeName, currentMap.getTeamSize()))) {
-			int n = currentMap.getTeamSize() + (event.getClick() == ClickType.LEFT ? 1 : -1);
+		if (name.equals(MessageUtils.color(teamSizeName, currentMap.getTeamSize()))) {
+			int n = currentMap.getTeamSize() + (event.getClick() == ClickType.LEFT ? 1:-1);
 			n = Math.max(n, 0);
 			currentMap.setTeamSize(n);
+			currentMap.saveParametersInConfig();
+			currentMap.saveConfig();
 		}
 
-		String currentWorldName = currentMap.getWorldName();
-		if (currentWorldName == null)
-			currentWorldName = "none";
-
-				if (name.equals(Messager.color(spawnName))) {
-					final Arena arena = currentArenas.get(player);
-					final ItemStack item = new ItemStack(Objects.requireNonNull(XMaterial.BLAZE_ROD.parseItem()));
-					final ItemMeta meta = item.getItemMeta();
-					final List<String> lore = new ArrayList<>();
-					lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_CLICK_THE_BLOCKS_THAT")));
-					lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_YOU_WANT_TO_ADD_SPAWNS_FOR")));
-					lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_YOU_CAN_ALSO_RIGHT_CLICK")));
-					lore.add(Messager.color(Messager.getMessage("CONFIG_MENU_TO_REMOVE_LAST_SET_SPAWN")));
-					meta.setDisplayName(Messager.color(Messager.getMessage("CONFIG_MENU_SPAWN_CONFIGURATOR")));
-					meta.setLore(lore);
-					item.setItemMeta(meta);
-		
-					SetupEvents.item = item;
-					player.getInventory().setItem(player.getInventory().getHeldItemSlot(), SetupEvents.item);
-					player.closeInventory();
-		
-					playerLocations.put(player, player.getLocation());
-					player.teleport(arena.getCenterBlock().toLocation(arena.getWorld()).clone().add(new Vector(0, 5, 0)));
-					player.setVelocity(new Vector(0, 1f, 0));
-		
-					player.setAllowFlight(true);
-					player.setFlying(true);
-		
-					Skywars.get().NMS().sendTitle(player, Messager.getMessage("CONFIG_MENU_ENABLED"), Messager.getMessage("CONFIG_MENU_SPAWN_EDIT_MODE"));
-					player.playSound(player.getLocation(), Sounds.NOTE_PLING.bukkitSound(), 3, 2);
-		
-					if (!currentMap.getSpawns().isEmpty())
-						player.sendMessage(Messager.getMessage("SPAWNS_CALCULATED_AND_SAVED", currentMap.getSpawns().size()));
-					currentMap.getSpawns().clear();
-		
-					player.sendMessage(Messager.getMessage("SPAWN_EDIT_MODE_ENTERED"));
-					player.sendMessage(Messager.getMessage("SPAWN_EDIT_MODE_INSTRUCTIONS_GENERAL"));
-					player.sendMessage(Messager.getMessage("SPAWN_EDIT_MODE_INSTRUCTIONS_ADD_SPAWN"));
-					player.sendMessage(Messager.getMessage("CONFIG_MENU_RIGHT_CLICK_TO_REMOVE_SPAWN"));
-					player.sendMessage(Messager.getMessage("CONFIG_MENU_TO_EXIT_DROP_THE_BLAZE_ROD"));
-					return;
-				}
-		if (name.equals(Messager.color(calculateSpawnsName))) {
-			currentMap.calculateSpawns();
-			player.sendMessage(Messager.getMessage("SPAWNS_CALCULATED_AND_SAVED", currentMap.getSpawns().size()));			if (currentMap.getSpawns().size() <= 0)
-				player.sendMessage(Messager.getMessage("WARNING_NO_BEACONS_ON_MAP"));
+		if (name.equals(MessageUtils.color(calculateSpawnsName))) {
+			if (!currentMap.calculateSpawns())
+				player.sendMessage(MessageUtils.color("&cNo beacons found in the arena. Nothing changed."));
+			else player.sendMessage(MessageUtils.color(
+					"&aSuccessfully &bcalculated &aand &bsaved &6%s spawns&a.",
+					currentMap.getSpawns().size()));
+			return;
 		}
 
-		if (name.equals(Messager.color(regenerateCasesName))) {
+		if (name.equals(MessageUtils.color(regenerateCasesName))) {
 			currentArena.resetCases();
 			if (currentMap.getSpawns().size() <= 0)
 				player.sendMessage(Messager.getMessage("WARNING_NO_SPAWNS_TO_CREATE_CASES"));
@@ -245,11 +222,47 @@ public class ConfigMenu implements Listener {
 			return;
 		}
 
-		final World arenaWorld = currentArena.getWorld();
+		if (name.equals(MessageUtils.color(saveWorld))) {
+			Path worldsPath = Skywars.get().getDataFolder().toPath().resolve("worlds").toAbsolutePath().normalize();
+			Path newFolder = worldsPath.resolve(currentMap.getName()).normalize();
+			if (newFolder.toFile().exists()) {
+				String backupWorldName = currentMap.getName() + "_old" + System.currentTimeMillis();
+				Path oldWorldsPath = Skywars.get().getDataFolder().toPath().resolve("old_worlds").toAbsolutePath().normalize();
+				if (!oldWorldsPath.toFile().exists())
+					if (!oldWorldsPath.toFile().mkdirs())
+						player.sendMessage("Could not create old_worlds directory: " + oldWorldsPath.toAbsolutePath());
+				Path worldBackup = oldWorldsPath.resolve(backupWorldName).toAbsolutePath().normalize();
+				try {
+					Files.move(newFolder, worldBackup, StandardCopyOption.REPLACE_EXISTING);
+				} catch (IOException e) {
+					player.sendMessage("Error moving world folder: " + e.getMessage());
+					player.sendMessage("\nCould not move world\nFrom: "
+							+ newFolder + "\nTo: " + worldBackup);
+				}
+			}
 
-		if (name.equals(Messager.color(teleportName))) {
-			if (arenaWorld == null) {
-				player.sendMessage(Messager.getMessage("WORLD_NOT_SET"));
+			World currentWorld = currentArena.getWorld();
+
+			player.sendMessage("Teleporting any players inside the world outside of it...");
+			for (final Player p : currentWorld.getPlayers())
+				SkywarsUtils.teleportPlayerLobbyOrLastLocation(p, true);
+
+			currentWorld.save();
+			player.sendMessage("Saved the world for arena: " + currentMap.getName());
+
+			/*
+			if (!Bukkit.unloadWorld(currentWorld, true)) {
+				player.sendMessage("Could not unload world :(");
+				return;
+			}
+			player.sendMessage("Unloaded the world for arena: " + currentMap.getName());
+			*/
+
+			File worldFolder = currentWorld.getWorldFolder();
+			Path worldPath = Paths.get(worldFolder.getAbsolutePath()).normalize();
+
+			if (!worldFolder.isDirectory()) {
+				player.sendMessage("The world folder does not exist or is not a directory: " + worldPath);
 				return;
 			}
 			Location loc = ConfigurationUtils.getLocationConfig(arenaWorld,
@@ -261,13 +274,29 @@ public class ConfigMenu implements Listener {
 			else {
 				player.teleport(loc);
 				player.sendMessage(Messager.getMessage("TELEPORTED_SUCCESSFULLY"));
+
+			try {
+				Files.copy(worldPath, newFolder, StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				player.sendMessage("Error moving world folder: " + e.getMessage());
+				player.sendMessage("\nCould not move world\nFrom: "
+						+ worldPath + "\nTo: " + newFolder);
 			}
+
+			return;
+		}
+
+		if (name.equals(MessageUtils.color(teleportName))) {
+			currentArena.goBackToCenter(player);
+			player.setGameMode(GameMode.CREATIVE);
 			return;
 		}
 
 		if (name.equals(Messager.color(chestsName))) {
 			currentArena.fillChests();
-			player.sendMessage(Messager.getMessage("CHESTS_FILLED_NAMED", currentArena.getActiveChests().size(), currentArena.getMap().getName()));			return;
+			player.sendMessage(Messager.getMessage("CHESTS_FILLED_NAMED",
+				currentArena.getActiveChests().size(), currentArena.getMap().getName()));
+			return;
 		}
 
 		if (name.equals(Messager.color(clearName))) {
@@ -278,7 +307,11 @@ public class ConfigMenu implements Listener {
 			player.closeInventory();
 		}
 
-		if (name.equals(Messager.color(worldFolderName, currentWorldName))) {
+		String currentWorldName = currentMap.getWorldName();
+		if (currentWorldName == null)
+			currentWorldName = "none";
+
+		if (name.equals(MessageUtils.color(worldFolderName, currentWorldName))) {
 			if (this.worldsFolder.exists() && this.worldsFolder.listFiles().length <= 0) {
 				player.closeInventory();
 				player.sendMessage(Messager.getMessage("NO_WORLD_FOLDERS_AVAILABLE"));
@@ -293,15 +326,53 @@ public class ConfigMenu implements Listener {
 			Skywars.get().sendDebugMessage("current file: " + worldFolder.getName());
 			if (worldFolder.getName().equals(worldFolderName)) {
 				currentMap.setWorldName(worldFolderName);
-				player.sendMessage(Messager.getMessage("SET_UP_WORLD_NAMED", currentMap.getWorldName()));
+				currentMap.saveParametersInConfig();
+				currentMap.saveConfig();
+				player.sendMessage(MessageUtils.getMessage("SET_UP_WORLD_NAMED", currentMap.getWorldName()));
 				break;
 			}
 		}
 
-		currentMap.saveParametersInConfig();
-		currentMap.saveConfig();
-
 		UpdateInventory(player);
+	}
+
+	static void OpenWorldsMenu(Player player) {
+		final File folder = new File(Skywars.get().getDataFolder() + "/worlds");
+		final Inventory inventory = Bukkit.createInventory(null, 9 * 6, MessageUtils.color("&aWorld folders"));
+
+		int index = 10;
+		for (final File worldFolder : Objects.requireNonNull(folder.listFiles())) {
+			final List<String> lore = new ArrayList<>();
+
+			boolean alreadyUsing = false;
+			for (final SkywarsMap map : Skywars.get().getMapManager().getMaps()) {
+				final String worldName = map.getWorldName();
+				if (worldName != null && worldName.equals(worldFolder.getName())) {
+					if (map == currentArenas.get(player).getMap()) {
+						lore.add(MessageUtils.color("&6Current world folder", map.getName()));
+					} else {
+						lore.add(MessageUtils.color("&cWarning! %s already uses this world folder", map.getName()));
+					}
+					alreadyUsing = true;
+					break;
+				}
+			}
+
+			if (!alreadyUsing)
+				lore.add(MessageUtils.color("&eClick to select this file"));
+
+			final ItemStack item = new ItemStack(Objects.requireNonNull(XMaterial.PAPER.parseItem()));
+			final ItemMeta meta = item.getItemMeta();
+
+			meta.setDisplayName(MessageUtils.color("&a%s", worldFolder.getName()));
+			meta.setLore(lore);
+			item.setItemMeta(meta);
+			inventory.setItem(index, item);
+			index++;
+		}
+
+		player.openInventory(inventory);
+		PlayerInventoryManager.setMenu(player, MenuType.MAP_CONFIG_WORLD_SELECTION);
 	}
 
 }

@@ -1,7 +1,8 @@
-/* (C) 2021 Bruno */
+// Copyright (c) 2025 Bruno
 package me.thebrunorm.skywars.structures;
 
-import me.thebrunorm.skywars.Messager;
+import me.thebrunorm.skywars.enums.SkywarsEventType;
+import me.thebrunorm.skywars.singletons.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
@@ -23,6 +24,12 @@ public class SkywarsEvent {
 		return this.arena;
 	}
 
+	public void decreaseTime() {
+		this.setTime(this.getTime() - 1);
+		if (this.getType() == SkywarsEventType.REFILL)
+			this.arena.displayChestHolograms(this.arena.getEventManager().getNextEventText());
+	}
+
 	public int getTime() {
 		return this.time;
 	}
@@ -39,25 +46,20 @@ public class SkywarsEvent {
 		this.type = type;
 	}
 
-	public void decreaseTime() {
-		this.setTime(this.getTime() - 1);
-		if (this.getType() == SkywarsEventType.REFILL)
-			this.arena.displayChestHolograms(this.arena.getNextEventText());
-	}
-
 	public void run() {
 		switch (this.type) {
 			case REFILL:
-				this.arena.broadcastRefillMessage();
 				this.arena.fillChests();
-				this.arena.displayChestHolograms(Messager.get("chest_holograms.refilled"));
+				this.arena.displayChestHolograms(MessageUtils.get("chest_holograms.refilled"));
 				break;
 			case ENDER_DRAGON:
 				Vector position = this.arena.getCenterBlock().add(new Vector(0, 100, 0));
 				World world = this.arena.getWorld();
+				world.setGameRuleValue("mobGriefing", "true");
 				Location location = position.toLocation(world);
 				world.spawnEntity(location, EntityType.ENDER_DRAGON);
 				break;
 		}
+		this.arena.broadcastEventMessage(this.type);
 	}
 }
